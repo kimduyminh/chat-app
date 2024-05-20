@@ -35,7 +35,7 @@ signupButton.addEventListener("click", () => {
             password: password_ca[0].value
         };
         console.log(JSON.stringify(signupInfo))
-        fetch('/signup', {
+        fetch('/app.signup', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -47,7 +47,7 @@ signupButton.addEventListener("click", () => {
             password: password_ca
         };
 
-        fetch('/login', {
+        fetch('/app.login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -56,12 +56,18 @@ signupButton.addEventListener("click", () => {
         })
             .then(response => {
                 if (response.ok) {
-                    fetch('/'+response.text());
+                    return response.text();
                 } else {
                     throw new Error('Error: ' + response.statusText);
                 }
-            }).then(data => console.log(data))
+            })
+            .then(session_id => {
+                return fetch('/' + session_id);
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
             .catch(error => console.error('Error:', error));
+
     }
 });
 
@@ -77,7 +83,7 @@ loginButton.addEventListener("click", () => {
 
     console.log(loginInfo);
 
-    fetch('/login', {
+    fetch('/app.login', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -86,10 +92,16 @@ loginButton.addEventListener("click", () => {
     })
         .then(response => {
             if (response.ok) {
-                fetch('/'+response.text());
+                return response.text();
             } else {
                 throw new Error('Error: ' + response.statusText);
             }
-        }).then(data => console.log(data))
+        })
+        .then(session_id => {
+            return fetch('/' + session_id);
+        })
+        .then(response => response.json())
+        .then(data => console.log(data))
         .catch(error => console.error('Error:', error));
+
 });

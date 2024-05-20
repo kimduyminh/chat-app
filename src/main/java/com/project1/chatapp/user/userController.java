@@ -10,11 +10,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class userController {
     @Autowired
     private userService userService;
-    @PostMapping("/login")
+    @PostMapping("/app.login")
     public ResponseEntity<String> login(@RequestBody userService.loginInfo loginInfo){
         return userService.login(loginInfo);
     }
-    @PostMapping("/signup")
+    @PostMapping("/app.signup")
     public ResponseEntity<String> signup(@RequestBody userService.signupInfo signupInfo){
         return userService.signUp(signupInfo);
     }

@@ -56,11 +56,16 @@ signupButton.addEventListener("click", () => {
         })
             .then(response => {
                 if (response.ok) {
-                    fetch('/'+response.text());
+                    return response.text();
                 } else {
                     throw new Error('Error: ' + response.statusText);
                 }
-            }).then(data => console.log(data))
+            })
+            .then(session_id => {
+                return fetch('/' + session_id);
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
             .catch(error => console.error('Error:', error));
     }
 });
