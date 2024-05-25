@@ -24,7 +24,7 @@ public class databaseConfig {
     public DataSource dataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-        dataSource.setUrl("jdbc:sqlserver://127.0.0.1:1433;DatabaseName=chatapp;encrypt=true;trustServerCertificate=true;");
+        dataSource.setUrl("jdbc:sqlserver://127.0.0.1:1433;encrypt=true;trustServerCertificate=true;");
         dataSource.setUsername("sa");
         dataSource.setPassword("KimDuyMinh1234@");
         return dataSource;

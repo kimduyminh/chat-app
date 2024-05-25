@@ -57,6 +57,25 @@ public class sessionService {
             throw new RuntimeException(e);
         }
     }
+    public String getSessionIdFromUser(String user_id){
+        String session_id="";
+        String getUserIdFromSessionQuery="select session_id from sessions where user_id=?";
+        try {
+            Connection getSessionIdFromUserConnection=dataSource.getConnection();
+            PreparedStatement getSessionIdFromUserStatement=getSessionIdFromUserConnection.prepareStatement(getUserIdFromSessionQuery);
+            getSessionIdFromUserStatement.setString(1,user_id);
+            ResultSet getSessionIdFromUserResult=getSessionIdFromUserStatement.executeQuery();
+            if (getSessionIdFromUserResult.next()){
+                getSessionIdFromUserResult.getString("session_id");
+            }
+            getSessionIdFromUserConnection.close();
+            getSessionIdFromUserStatement.close();
+            getSessionIdFromUserResult.close();
+            return session_id;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
     public String getUserIdFromSession(String session_id){
         String userId="";
         String getUserIdFromSessionQuery="select user_id from sessions where session_id=?";

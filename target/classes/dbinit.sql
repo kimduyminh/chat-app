@@ -3,7 +3,6 @@ create table [user] (
                         username NVARCHAR(50) NOT NULL,
                         password NVARCHAR(50) NOT NULL,
                         name NVARCHAR(100) NOT NULL,
-                        status int
 );
 CREATE TABLE friendship (
                             user_id1 NVARCHAR(50),
@@ -24,7 +23,11 @@ CREATE TABLE joinedchat (
                             user_id NVARCHAR(50) FOREIGN KEY REFERENCES [user],
                             chat_id NVARCHAR(50)
 );
-CREATE table chat(
+CREATE table chatroom(
     chat_id NVARCHAR(50) primary key,
     chat_name nvarchar(50)
+)
+create table sessions(
+    user_id NVARCHAR(50),
+    session_id NVARCHAR(50) primary key
 )
