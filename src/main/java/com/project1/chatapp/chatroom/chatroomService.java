@@ -158,4 +158,40 @@ public class chatroomService {
         }
         return false;
     }
+    public void changeChatroomName(String session_id,String chat_id,String name){
+        if(sessionService.checkSession(session_id)){
+            if (checkUserExistsInChatroom(session_id,chat_id)){
+                String changeChatroomNameQuery="update chatroom set chat_name=? where chat_id=?";
+                try{
+                    Connection changeChatroomNameConnection=dataSource.getConnection();
+                    PreparedStatement changeChatroomNameStatement=changeChatroomNameConnection.prepareStatement(changeChatroomNameQuery);
+                    changeChatroomNameStatement.setString(1,name);
+                    changeChatroomNameStatement.setString(2,chat_id);
+                    changeChatroomNameStatement.execute();
+                    changeChatroomNameConnection.close();
+                    changeChatroomNameStatement.close();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    }
+    public void kickFromChatroom(String session_id,String chat_id,String kick_user_id){
+        if(sessionService.checkSession(session_id)){
+            if(checkUserExistsInChatroom(session_id,chat_id)){
+                String kickUserQuery="delete from joinedchat where user_id=? and chat_id=?";
+                try{
+                    Connection kickUserConnection= dataSource.getConnection();
+                    PreparedStatement kickUserStatement=kickUserConnection.prepareStatement(kickUserQuery);
+                    kickUserStatement.setString(1,kick_user_id);
+                    kickUserStatement.setString(2,chat_id);
+                    kickUserStatement.execute();
+                    kickUserConnection.close();
+                    kickUserStatement.close();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    }
 }
