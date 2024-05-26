@@ -199,6 +199,9 @@ public class userService {
                     userPublic.user_id=findUserResultSet.getString("user_id");
                     findUserResult.add(userPublic);
                 }
+                findUserResultSet.close();
+                findUserStatement.close();
+                findUserConnection.close();
                 if(findUserResult.isEmpty()){
                     return null;
                 }else{

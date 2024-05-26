@@ -116,7 +116,7 @@ public class chatroomService {
                     preparedStatementInviteToChatRoom.setString(2,user_id);
                     preparedStatementInviteToChatRoom.executeUpdate();
                     preparedStatementInviteToChatRoom.close();
-                    preparedStatementInviteToChatRoom.close();
+                    connectionInviteToChatRoom.close();
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
@@ -136,7 +136,12 @@ public class chatroomService {
                 String chatroomName=resultSetGetChatroomName.getString("chat_id");
                 resultSetGetChatroomName.close();
                 return chatroomName;
-            }else{return null;}
+            }else{
+                getChatroomNameConnection.close();
+                preparedStatementGetChatroomName.close();
+                resultSetGetChatroomName.close();
+                return null;
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -151,7 +156,11 @@ public class chatroomService {
                 preparedStatementCheckUserExists.setString(1,chat_id);
                 preparedStatementCheckUserExists.setString(2,user_id);
                 ResultSet resultSetCheckUserExists=preparedStatementCheckUserExists.executeQuery();
-                return resultSetCheckUserExists.next();
+                boolean result=resultSetCheckUserExists.next();
+                checkUserExistsConnection.close();
+                preparedStatementCheckUserExists.close();
+                resultSetCheckUserExists.close();
+                return result;
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
