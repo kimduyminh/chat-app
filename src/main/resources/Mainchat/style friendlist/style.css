@@ -1,0 +1,212 @@
+/* Basic reset and common styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+}
+
+.chat-section {
+    display: flex;
+    height: 100vh;
+}
+
+.chat-container {
+    display: flex;
+    width: 100%;
+}
+
+/* Chat Sidebar Styles */
+.chat-sidebar {
+    width: 64px;
+    background-color: var(--slate-100);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 50;
+}
+
+.chat-sidebar-logo {
+    font-size: 28px;
+    color: var(--emerald-600);
+    display: block;
+    text-align: center;
+    padding: 12px 8px;
+    text-decoration: none;
+}
+
+.chat-sidebar-menu {
+    list-style-type: none;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 16px 0;
+}
+
+.chat-sidebar-menu > * > a {
+    display: block;
+    text-align: center;
+    padding: 12px 8px;
+    font-size: 24px;
+    text-decoration: none;
+    color: var(--slate-400);
+    position: relative;
+    transition: color .15s ease-in-out;
+}
+
+.chat-sidebar-menu > * > a:hover {
+    color: var(--slate-600);
+}
+
+.chat-sidebar-menu > .active > a {
+    box-shadow: inset 4px 0 0 0 var(--emerald-500);
+    color: var(--emerald-600);
+    background-color: var(--emerald-100);
+}
+
+.chat-sidebar-menu > * > a::before {
+    content: attr(data-title);
+    position: absolute;
+    top: 50%;
+    left: calc(100% - 16px);
+    border-radius: 4px;
+    transform: translateY(-50%);
+    font-size: 13px;
+    padding: 6px 12px;
+    background-color: rgba(0, 0, 0, .6);
+    color: var(--white);
+    opacity: 0;
+    visibility: hidden;
+    transition: all .15s ease-in-out;
+}
+
+.chat-sidebar-menu > * > a:hover::before {
+    left: calc(100% - 8px);
+    opacity: 1;
+    visibility: visible;
+}
+
+.chat-sidebar-profile {
+    margin-top: auto;
+    position: relative;
+}
+
+.chat-sidebar-profile-toggle {
+    background-color: transparent;
+    border: none;
+    outline: transparent;
+    width: 40px;
+    height: 40px;
+    margin: 0 auto;
+    display: block;
+    cursor: pointer;
+}
+
+.chat-sidebar-profile-toggle > img {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+}
+
+.chat-sidebar-profile-dropdown {
+    position: absolute;
+    bottom: 100%;
+    left: 16px;
+    background-color: var(--white);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .1);
+    list-style-type: none;
+    border-radius: 4px;
+    padding: 4px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(.9);
+    transform-origin: left bottom;
+    transition: all .15s ease-in-out;
+}
+
+.chat-sidebar-profile.active .chat-sidebar-profile-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+}
+
+.chat-sidebar-profile-dropdown a {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    text-decoration: none;
+    color: var(--slate-400);
+    font-size: 14px;
+}
+
+.chat-sidebar-profile-dropdown a:hover {
+    background-color: var(--slate-100);
+    color: var(--slate-600);
+}
+
+.chat-sidebar-profile-dropdown a:active {
+    background-color: var(--slate-200);
+}
+
+.chat-sidebar-profile-dropdown a i {
+    margin-right: 12px;
+    font-size: 17px;
+}
+
+/* Friendlist Container Styles */
+.friendlist-container {
+    margin-left: 64px; /* Add margin to prevent overlap */
+    flex-grow: 1;
+    padding: 20px;
+    background-color: #ecf0f1;
+    overflow-y: auto;
+}
+
+.friendlist-container h1 {
+    margin-bottom: 20px;
+}
+
+.search-container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+#searchInput {
+    width: 70%;
+    padding: 10px;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+}
+
+#addFriendBtn {
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#addFriendBtn:hover {
+    background-color: #2980b9;
+}
+
+#friendList {
+    list-style-type: none;
+}
+
+#friendList li {
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
