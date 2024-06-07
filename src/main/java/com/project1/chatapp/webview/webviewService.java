@@ -7,4 +7,7 @@ public class webviewService {
     public String loadLoginPage(){
         return "forward:/login.html";
     }
+    public String forwardMainchat(){
+        return "forward:/mainchat/index.html";
+    }
 }

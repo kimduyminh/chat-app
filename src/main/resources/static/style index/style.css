@@ -25,7 +25,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--slate-100);
+    background-color: var(--slate-100);;
 }
 .chat-container {
     max-width: 1360px;
