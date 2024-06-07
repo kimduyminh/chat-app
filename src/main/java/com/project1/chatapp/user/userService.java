@@ -58,6 +58,7 @@ public class userService {
        private String user_id2;
        private int status_id;
     }
+    public String tempSession;
     public ResponseEntity<String> login(@RequestBody loginInfo loginInfo) {
         System.out.println("Connected successfully");
         String loginQuery = "SELECT * FROM master.dbo.[user] where username =? and password=?";
@@ -78,6 +79,7 @@ public class userService {
                 System.out.println("6");
                 String user_id = rs.getString("user_id");
                 String session_id=sessionService.newSession(user_id);
+                tempSession=session_id;
                 System.out.println("7");
                 System.out.println(user_id);
                 ps.close();

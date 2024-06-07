@@ -62,7 +62,7 @@ signupButton.addEventListener("click", () => {
                 }
             })
             .then(session_id => {
-                return fetch('/' + session_id);
+                return fetch('/mainchat/' + session_id);
             })
             .then(response => response.json())
             .then(data => console.log(data))
@@ -98,7 +98,7 @@ loginButton.addEventListener("click", () => {
             }
         })
         .then(session_id => {
-            return fetch('/' + session_id);
+            return fetch('/mainchat/' + session_id);
         })
         .then(response => response.json())
         .then(data => console.log(data))

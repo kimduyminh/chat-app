@@ -1,5 +1,6 @@
 package com.project1.chatapp.sessions;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -8,10 +9,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 public class sessionService {
+    @Getter
     @Autowired
     private session session;
     @Autowired
@@ -35,6 +38,8 @@ public class sessionService {
             throw new RuntimeException(e);
         }
     }
+
+
     public boolean checkSession(String session_id){
         String checkSessionQuery="select * from sessions where session_id=?";
         try {

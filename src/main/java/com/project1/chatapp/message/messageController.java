@@ -32,4 +32,5 @@ public class messageController {
     public List<message> listMessages(@PathVariable("session_id") String session_id, @PathVariable("chat_id")String chat_id) {
         return messageService.listMessages(session_id,chat_id);
     }
+
 }

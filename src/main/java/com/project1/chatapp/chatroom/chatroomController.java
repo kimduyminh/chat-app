@@ -3,10 +3,7 @@ package com.project1.chatapp.chatroom;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import com.project1.chatapp.message.messageService;
 
 import java.util.List;
@@ -26,6 +23,25 @@ public class chatroomController {
     public List<chatroomService.chatroomInfo> loadChat(@PathVariable String session_id) {
         return chatroomService.listChatRoom(session_id);
     }
-    @PostMapping("/app/{session_id}/{chatid}/delete")
+    @GetMapping("/app/{session_id}/{chatid}/delete")
+    public String deleteChat(@PathVariable String session_id,@PathVariable String chatid) {
+        chatroomService.deleteChatRoom(session_id,chatid);
+        return "Chatroom deleted";
+    }
+    @GetMapping("/app/{session_id}/{chat_id}/{user_id}/add")
+    public String addToChatRoom(@PathVariable String session_id,@PathVariable String chat_id,@PathVariable String user_id) {
+        chatroomService.addToChatRoom(session_id,chat_id,user_id);
+        return "User added";
+    }
+    @GetMapping("/app/{session_id}/{chat_id}/changename")
+    public String changeName(@PathVariable String session_id, @PathVariable String chat_id, @RequestBody String name) {
+        chatroomService.changeChatroomName(session_id,chat_id,name);
+        return "Chatroom name changed";
+    }
+    @GetMapping("app/{session_id}/{chat_id}/kick")
+    public String kickFromChatroom(@PathVariable String session_id,@PathVariable String chat_id,@RequestBody String user_id) {
+        chatroomService.kickFromChatroom(session_id,chat_id,user_id);
+        return "User kicked";
+    }
     
 }

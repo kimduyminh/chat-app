@@ -2,9 +2,9 @@ package com.project1.chatapp.user;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 public class userController {
@@ -18,4 +18,9 @@ public class userController {
     public ResponseEntity<String> signup(@RequestBody userService.signupInfo signupInfo){
         return userService.signUp(signupInfo);
     }
+    @GetMapping("/friend/{session_id}")
+    public List<userService.friend> getFriends(@PathVariable("session_id") String session_id){
+        return userService.getListFriend(session_id);
+    }
+    
 }
