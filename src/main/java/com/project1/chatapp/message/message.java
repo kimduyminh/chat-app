@@ -4,11 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
 
-@Configuration
+@Component
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -18,8 +18,4 @@ public class message {
     private String message;
     private String chat_id;
     private Timestamp time;
-
-    public Timestamp getTime() {
-        return new Timestamp(System.currentTimeMillis());
-    }
 }

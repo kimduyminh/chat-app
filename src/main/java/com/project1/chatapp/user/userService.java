@@ -105,42 +105,37 @@ public class userService {
     }
 
     public ResponseEntity<String> signUp(@RequestBody signupInfo signupInfo) {
-        int statusSign = 0;
-        String checkExistenceQuery = "SELECT * FROM master.dbo.[user] where username =? and password=?";
-        try {
-            Connection connection = dataSource.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(checkExistenceQuery);
-            preparedStatement.setString(1, signupInfo.username);
-            preparedStatement.setString(2, signupInfo.password);
+        String checkExistenceQuery = "SELECT * FROM master.dbo.[user] WHERE username = ? AND password = ?";
+        String signupQuery = "INSERT INTO master.dbo.[user] (user_id, username, password, name) VALUES (?, ?, ?, ?)";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(checkExistenceQuery)) {
+
+            preparedStatement.setString(1, signupInfo.getUsername());
+            preparedStatement.setString(2, signupInfo.getPassword());
             ResultSet resultSet = preparedStatement.executeQuery();
-            resultSet.next();
-            if (!resultSet.next()) {
-                statusSign = 1;
-            }
-            if (statusSign == 1) {
-                String signupQuery = "insert into master.dbo.[user] (user_id, username, password, name) values (?,?,?,?)";
-                System.out.println("1");
-                System.out.println(signupInfo.name);
+
+            if (!resultSet.next()) { // User does not exist
                 String id_created = idGenerator();
-                Connection connection1 = dataSource.getConnection();
-                PreparedStatement preparedStatement1 = connection1.prepareStatement(signupQuery);
-                preparedStatement1.setString(1, id_created);
-                preparedStatement1.setString(2, signupInfo.username);
-                preparedStatement1.setString(3, signupInfo.password);
-                preparedStatement1.setString(4, signupInfo.name);
-                String session_id=sessionService.newSession(id_created);
-                preparedStatement1.executeUpdate();
-                connection1.close();
-                preparedStatement1.close();
-                return ResponseEntity.status(HttpStatus.OK).body(session_id);
+                try (Connection connection1 = dataSource.getConnection();
+                     PreparedStatement preparedStatement1 = connection1.prepareStatement(signupQuery)) {
+
+                    preparedStatement1.setString(1, id_created);
+                    preparedStatement1.setString(2, signupInfo.username);
+                    preparedStatement1.setString(3, signupInfo.password);
+                    preparedStatement1.setString(4, signupInfo.name);
+                    preparedStatement1.executeUpdate();
+
+                    String session_id = sessionService.newSession(id_created);
+                    return ResponseEntity.status(HttpStatus.OK).body("{\"session_id\":\"" + session_id + "\"}");
+                }
             } else {
-                System.out.println("2");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(checkExistenceQuery);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\":\"User already exists, please login\"}");
             }
         } catch (SQLException ex) {
-            throw new RuntimeException(ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\":\"" + ex.getMessage() + "\"}");
         }
     }
+
     private String getUserNameFromId (String user_id) {
         String getName="select name from [user] where user_id=?";
         try {

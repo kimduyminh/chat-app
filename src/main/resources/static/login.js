@@ -1,12 +1,14 @@
+// Select elements
 let signupsw = document.querySelector(".signup");
 let loginsw = document.querySelector(".login");
-let login = document.querySelector(".login-box")
-let signup = document.querySelector(".signup-box")
+let login = document.querySelector(".login-box");
+let signup = document.querySelector(".signup-box");
 let slider = document.querySelector(".slider");
 let formSection = document.querySelector(".form-section");
 let loginButton = document.querySelector(".login-box .clkbtnlogin");
 let signupButton = document.querySelector(".signup-box .clkbtnsignup");
 
+// Event listeners for switching between login and signup
 signupsw.addEventListener("click", () => {
     slider.classList.add("moveslider");
     formSection.classList.add("form-section-move");
@@ -17,6 +19,7 @@ loginsw.addEventListener("click", () => {
     formSection.classList.remove("form-section-move");
 });
 
+// Event listener for signup button
 signupButton.addEventListener("click", () => {
     // Retrieve input values
     let name_ca = signup.querySelector('.namesign.ele').value;
@@ -38,7 +41,7 @@ signupButton.addEventListener("click", () => {
     };
 
     // Perform signup fetch request
-    fetch('/app.signup', {
+    fetch('/signup', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -47,11 +50,18 @@ signupButton.addEventListener("click", () => {
     })
         .then(response => {
             if (!response.ok) {
-                throw new Error('Error: ' + response.statusText);
+                return response.json().then(data => {
+                    const errorMessage = data.error || 'Unknown error'; // Extract the error message or use a default message
+                    alert('Signup Error: ' + errorMessage); // Display an alert with the error message
+                    throw new Error(errorMessage);
+                });
             }
             return response.text();
         })
+
         .then(session_id => {
+            console.log('Signup successful, session_id:', session_id);
+
             // Perform login fetch request
             const loginInfo = {
                 username: email_ca,
@@ -63,34 +73,23 @@ signupButton.addEventListener("click", () => {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(loginInfo)
-            });
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error: ' + response.statusText);
-            }
-            return response.text();
-        })
-        .then(session_id => {
-            // Fetch mainchat data using session_id
-            return fetch('/mainchat/' + session_id, {
-                method: 'GET'
-            });
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error: ' + response.statusText);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log(data);
-            // Handle mainchat data
-        })
-        .catch(error => console.error('Error:', error));
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => { throw new Error('Login Error: ' + text); });
+                    }
+                    return response.text();
+                })
+                .then(session_id => {
+                    console.log('Login successful, session_id:', session_id);
+                    // Redirect to mainchat with session ID
+                    window.location.href = '/mainchat/' + session_id;
+                })
+                .catch(error => console.error('Error:', error));
+        });
 });
 
-
+// Event listener for login button
 loginButton.addEventListener("click", () => {
     let username = login.querySelector('.emaillog.ele').value;
     let password = login.querySelector('.passwordlog.ele').value;
@@ -109,13 +108,14 @@ loginButton.addEventListener("click", () => {
     })
         .then(response => {
             if (!response.ok) {
-                throw new Error('Error: ' + response.statusText);
+                return response.text().then(text => { throw new Error('Login Error: ' + text); });
             }
             return response.text();
         })
         .then(session_id => {
+            console.log('Login successful, session_id:', session_id);
             // Redirect to mainchat with session ID
             window.location.href = '/mainchat/' + session_id;
         })
         .catch(error => console.error('Error:', error));
-});
+})

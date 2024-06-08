@@ -3,9 +3,11 @@ package com.project1.chatapp.message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import com.project1.chatapp.sessions.sessionService;
 
@@ -24,11 +26,12 @@ public class messageController {
     }
 
     @MessageMapping("/app/{session_id}/{chat_id}/sendm")
-    public void newMessage(@Payload message message,String chat_id,String session_id) {
+    @SendTo("/app/{session_id}/{chat_id}")
+    public message newMessage(@Payload message message,String chat_id,String session_id) {
         messageService.newMessage(message,chat_id,session_id);
-        messagingTemplate.convertAndSend("/mainchat/{chat_id}",message);
+        return message;
     }
-    @SubscribeMapping("/app/{session_id}/{chat_id}/loadm")
+    @GetMapping("/app/{session_id}/{chat_id}/loadm")
     public List<message> listMessages(@PathVariable("session_id") String session_id, @PathVariable("chat_id")String chat_id) {
         return messageService.listMessages(session_id,chat_id);
     }

@@ -14,7 +14,7 @@ public class userController {
     public ResponseEntity<String> login(@RequestBody userService.loginInfo loginInfo){
         return userService.login(loginInfo);
     }
-    @PostMapping("/app.signup")
+    @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody userService.signupInfo signupInfo){
         return userService.signUp(signupInfo);
     }
