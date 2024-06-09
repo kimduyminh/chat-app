@@ -16,8 +16,7 @@ public class chatroomController {
     private messageService messageService;
     @PostMapping("/app/{session_id}/createChatroom")
     public ResponseEntity<String> createChatroom(@PathVariable String session_id,String name) {
-        chatroomService.createChatRoom(session_id,name);
-        return ResponseEntity.ok("Chatroom created");
+        return ResponseEntity.ok(chatroomService.createChatRoom(session_id,name));
     }
     @GetMapping("/app/{session_id}/loadchat")
     public ResponseEntity<List<chatroomService.chatroomInfo>> loadChat(@PathVariable String session_id) {

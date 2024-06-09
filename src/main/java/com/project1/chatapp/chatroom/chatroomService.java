@@ -32,7 +32,7 @@ public class chatroomService {
     private String idGenerator(){
         return UUID.randomUUID().toString();
     }
-    public void createChatRoom(String name,String session_id){
+    public String createChatRoom(String name,String session_id){
         if (sessionService.checkSession(session_id)){
         String createChatRoomQuery="insert into master.dbo.chatroom (chat_id,chat_name) values (?,?)";
         String id_created = idGenerator();
@@ -44,6 +44,7 @@ public class chatroomService {
             preparedStatementCreateChatRoom.executeUpdate();
             connectionCreateChatRoom.close();
             preparedStatementCreateChatRoom.close();
+            return id_created;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }}

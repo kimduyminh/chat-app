@@ -25,7 +25,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--slate-100);;
+    background-color: var(--slate-100);
 }
 .chat-container {
     max-width: 1360px;
@@ -336,6 +336,107 @@ body {
     color: var(--slate-400);
     font-weight: 500;
 }
+
+/* Popup container */
+/* CSS Styles */
+.create-chat-container {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.create-chat {
+    background-color: #4CAF50; /* Green background */
+    color: white; /* White text */
+    border: none; /* Remove borders */
+    padding: 10px 16px; /* Some padding */
+    font-size: 16px; /* Increase font size */
+    cursor: pointer; /* Add a mouse pointer on hover */
+}
+
+.create-chat i {
+    font-size: 24px; /* Increase icon size */
+}
+
+.popup {
+    display: none; /* Hide popup */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+.popup-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 300px; /* Could be more or less, depending on screen size */
+    max-width: 90%;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    border-radius: 10px;
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.search-input, .group-name-input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+.search-results, .selected-items {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.search-results li, .selected-items li {
+    padding: 8px;
+    margin: 5px 0;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.search-results li:hover, .selected-items li:hover {
+    background-color: #ddd;
+}
+
+.create-group-btn {
+    width: 100%;
+    padding: 10px;
+    background-color: #2d63c8;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.create-group-btn:hover {
+    background-color: #1a3f91;
+}
+
 /* end: Content side */
 
 

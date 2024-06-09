@@ -9,6 +9,7 @@ const conversationFormButtons = {
 var chatLink = document.getElementById("chat-link");
 var contactsLink = document.getElementById("contacts-link");
 let inputData="";
+let newlyCreatedChatId="";
 
 // GET SESSION ID
 
@@ -315,3 +316,230 @@ document.querySelectorAll('.conversation-form-input').forEach(function (item) {
 conversationFormButtons.submitMessage.addEventListener('click', (event) => {
     sendMessage(session_id,chat_id_current,inputData,new Date());
 })
+
+// CREATE CHATROOM POPUP
+document.addEventListener('DOMContentLoaded', (event) => {
+    const popup = document.getElementById("popup");
+    const popupSearchInput = document.getElementById("popupSearchInput");
+    const popupSearchResults = document.getElementById("popupSearchResults");
+    const selectedItems = document.getElementById("selectedItems");
+    const groupNameInput = document.getElementById("groupName");
+    const createGroupBtn = document.querySelector(".create-group-btn");
+
+    let selectedUserIds = [];
+
+    window.huybeo = function huybeo() {
+        popup.style.display = "block";
+    }
+
+    window.closePopup = function closePopup() {
+        popup.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == popup) {
+            popup.style.display = "none";
+        }
+    }
+
+    popupSearchInput.onkeyup = function() {
+        const filter = popupSearchInput.value.toLowerCase();
+
+        fetch(`/app/${session_id}/find`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ info: filter })
+        })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('Failed to fetch users');
+                }
+            })
+            .then(data => {
+                popupSearchResults.innerHTML = "";
+                const filteredData = data.filter(item => item.name.toLowerCase().includes(filter));
+                filteredData.forEach(item => {
+                    const li = document.createElement("li");
+                    li.textContent = item.name;
+                    li.onclick = () => addItem(item);
+                    popupSearchResults.appendChild(li);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                popupSearchResults.innerHTML = "<li>Failed to fetch users</li>";
+            });
+    }
+
+    function addItem(item) {
+        selectedUserIds.push(item.user_id);
+        const li = document.createElement("li");
+        li.textContent = item.name;
+        li.onclick = function() {
+            selectedItems.removeChild(li);
+            selectedUserIds = selectedUserIds.filter(id => id !== item.user_id);
+        };
+        selectedItems.appendChild(li);
+    }
+
+    createGroupBtn.onclick = function() {
+        const groupName = groupNameInput.value;
+        const payload = new URLSearchParams();
+        payload.append('name', groupName);
+
+        fetch(`/app/${session_id}/createChatroom`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: payload
+        })
+            .then(response => {
+                if (response.ok) {
+                    return response.text();
+                } else {
+                    throw new Error('Failed to create chatroom');
+                }
+            })
+            .then(chatId => {
+                alert(`Nhóm đã tạo với tên: ${groupName} và các thành viên: ${selectedUserIds.join(", ")}`);
+                popup.style.display = "none";
+                selectedItems.innerHTML = "";
+                groupNameInput.value = "";
+
+                selectedUserIds.forEach(userId => {
+                    fetch(`/app/${session_id}/${chatId}/${userId}/add`, {
+                        method: 'GET'
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                console.log(`User ${userId} added to chat ${chatId}`);
+                            } else {
+                                throw new Error(`Failed to add user ${userId} to chat ${chatId}`);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                });
+
+                selectedUserIds = [];
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Failed to create chatroom");
+            });
+    }
+
+    // Expose functions to global scope
+    window.huybeo = huybeo;
+    window.closePopup = closePopup;
+});
+
+var selectedUserIds = []; // Array to store selected user IDs
+
+popupSearchInput.onkeyup = function() {
+    var filter = popupSearchInput.value.toLowerCase();
+
+    // Send POST request to fetch user data based on filter
+    fetch(`/app/${session_id}/find`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ info: filter })
+    })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Failed to fetch users');
+            }
+        })
+        .then(data => {
+            popupSearchResults.innerHTML = "";
+            var filteredData = data.filter(item => item.name.toLowerCase().includes(filter));
+            filteredData.forEach(item => {
+                var li = document.createElement("li");
+                li.textContent = item.name;
+                li.onclick = function() {
+                    addItem(item); // Add user object instead of just name
+                };
+                popupSearchResults.appendChild(li);
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            popupSearchResults.innerHTML = "<li>Failed to fetch users</li>";
+        });
+}
+
+function addItem(item) {
+    selectedUserIds.push(item.user_id); // Store the user_id
+    var li = document.createElement("li");
+    li.textContent = item.name;
+    li.onclick = function() {
+        selectedItems.removeChild(li);
+        selectedUserIds = selectedUserIds.filter(id => id !== item.user_id); // Remove the user_id from the array
+    };
+    selectedItems.appendChild(li);
+}
+
+createGroupBtn.onclick = function() {
+    var groupName = groupNameInput.value;
+
+    // Create payload
+    var payload = new URLSearchParams();
+    payload.append('name', groupName);
+
+    // Send POST request to create chatroom
+    fetch(`/app/${session_id}/createChatroom`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: payload
+    })
+        .then(response => {
+            if (response.ok) {
+                return response.text(); // Assuming chatId is returned as plain text
+            } else {
+                throw new Error('Failed to create chatroom');
+            }
+        })
+        .then(chatId => {
+            alert("Nhóm đã tạo với tên: " + groupName + " và các thành viên: " + selectedUserIds.join(", "));
+            popup.style.display = "none";
+            selectedItems.innerHTML = "";
+            groupNameInput.value = "";
+
+            // Add each user to the newly created chat room
+            selectedUserIds.forEach(userId => {
+                fetch(`/app/${session_id}/${newlyCreatedChatId}/${userId}/add`, {
+                    method: 'GET'
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            console.log(`User ${userId} added to chat ${chatId}`);
+                        } else {
+                            throw new Error(`Failed to add user ${userId} to chat ${chatId}`);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            });
+
+            // Clear the selectedUserIds array after adding users to the chat room
+            selectedUserIds = [];
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("Failed to create chatroom");
+        });
+}
+
