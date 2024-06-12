@@ -1,6 +1,7 @@
 // MAPPING ELEMENTS
 const session_id=getSessionIdFromQuery();
-const chat_id_current="";
+let chat_id_current="";
+let client;
 const conversationFormButtons = {
     emotion: document.querySelector(".conversation-form-button .ri-emotion-line"),
     record: document.querySelector(".conversation-form-record .ri-mic-line"),
@@ -12,7 +13,7 @@ let inputData="";
 let newlyCreatedChatId="";
 
 // GET SESSION ID
-
+connectWebSocket()
 function getSessionIdFromQuery() {
     var url = window.location.href;
     var queryString = url.split('?')[1];
@@ -40,9 +41,9 @@ function connectWebSocket() {// Retrieve session ID from local storage
         return;
     }
 
-    const wsUrl = 'ws://localhost:8080/ws'; // Adjust the URL according to your server configuration
+    const wsUrl = '/ws'; // Adjust the URL according to your server configuration
 
-    const client = new StompJs.Client({
+    client = new StompJs.Client({
         brokerURL: wsUrl,
         connectHeaders: {
             'session-id': session_id, // Use session ID in connection headers
@@ -184,70 +185,81 @@ document.querySelectorAll('.conversation-back').forEach(function (item) {
     })
 })
 
-// LOAD ALL CHATROOM
-
 document.addEventListener("DOMContentLoaded", () => {
     fetch(`/app/${session_id}/loadchat`)
         .then(response => response.json())
         .then(data => {
-            const messagesList = document.querySelector(".content-messages-list"); // Target the ul element
+            const messagesList = document.querySelector(".content-messages-list");
             data.forEach(chatroomInfo => {
                 const listItem = document.createElement("li");
                 listItem.classList.add("content-message");
                 listItem.innerHTML = `
-                <a href="#" data-conversation="${chatroomInfo.chat_id}">
-                    <img class="content-message-image" src="${chatroomInfo.name}" alt="">
-                    <span class="content-message-info">
-                        <span class="content-message-name">${chatroomInfo.name}</span>
-                    </span>
-                </a>
-            `;
+                    <a href="#" data-conversation="${chatroomInfo.chat_id}">
+                        <img class="content-message-image" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8cGVvcGxlfGVufDB8fDB8fHww&auto=format&fit=crop&w=500&q=60" alt="">
+                        <span class="content-message-info">
+                            <span class="content-message-name">${chatroomInfo.name}</span>
+                        </span>
+                    </a>
+                `;
 
-                // Attach click event listener to the list item
                 listItem.addEventListener("click", function(event) {
-
+                    event.preventDefault();  // Prevent default anchor behavior
                     const conversationId = this.querySelector("a").getAttribute("data-conversation");
                     console.log("Conversation ID:", conversationId);
-                    createConversationUser(chatroomInfo.name)
-                    fetch(`/app/${session_id}/${conversationId}/loadm`)
-                        .then(response => response.json())
-                        .then(messages => {
-                            messages.forEach(message => {
-                                createConversationItem(message);
-                            });
-                        })
-                        .catch(error => console.error('Error:', error));
-                    createSubmitForm()
-                });
+                    const userDiv = createConversationUser(chatroomInfo.name);
+                    document.querySelector(".conversation").prepend(userDiv);
+                    newSubscription(conversationId);
+                    chat_id_current=conversationId;
 
+                    // Clear the existing conversation items
+                    const conversationList = document.querySelector(".conversation-list");
+                    conversationList.innerHTML = '';
+
+                    if (conversationId) {
+                        fetch(`/app/${session_id}/${conversationId}/loadm`)
+                            .then(response => response.json())
+                            .then(messages => {
+                                if (Array.isArray(messages)) {
+                                    messages.forEach(message => {
+                                        const conversationItem = createConversationItem(message);
+                                        conversationList.appendChild(conversationItem);
+                                    });
+                                } else {
+                                    console.log('No messages to display');
+                                }
+                            })
+                            .catch(error => console.error('Error:', error));
+                    } else {
+                        console.error('Conversation ID is undefined');
+                    }
+
+                    const formDiv = createSubmitForm();
+                    document.querySelector(".conversation").appendChild(formDiv);
+                });
 
                 messagesList.appendChild(listItem);
             });
         })
         .catch(error => console.error('Error:', error));
-
 });
 
-// CREATE CHAT WINDOW FUNCTIONS
-
-function createConversationUser(name,status) {
+function createConversationUser(name) {
     const userDiv = document.createElement("div");
     userDiv.classList.add("conversation-user");
-
     userDiv.innerHTML = `
         <div>
             <div class="conversation-user-name">${name}</div>
         </div>
     `;
-
     return userDiv;
 }
-//isMe: false=sent by me
-//true=sent by other user
+
 function createConversationItem(message) {
     const itemLi = document.createElement("li");
+    const isMe = message.sentBySession;
     itemLi.classList.add("conversation-item", isMe ? "me" : "");
 
+    const formattedTime = new Date(message.time).toLocaleString();
     itemLi.innerHTML = `
         <div class="conversation-item-side">
             <img class="conversation-item-image" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8cGVvcGxlfGVufDB8fDB8fHww&auto=format&fit=crop&w=500&q=60" alt="">
@@ -256,8 +268,8 @@ function createConversationItem(message) {
             <div class="conversation-item-wrapper">
                 <div class="conversation-item-box">
                     <div class="conversation-item-text">
-                        <p>${message.message}</p>
-                        <div class="conversation-item-time">${message.time}</div>
+                        <p>${escapeHtml(message.message)}</p>
+                        <div class="conversation-item-time">${formattedTime}</div>
                     </div>
                     <div class="conversation-item-dropdown">
                         <button type="button" class="conversation-item-dropdown-toggle"><i class="ri-more-2-line"></i></button>
@@ -272,34 +284,54 @@ function createConversationItem(message) {
     `;
     return itemLi;
 }
+
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 function createSubmitForm() {
     const conversationDiv = document.createElement("div");
     conversationDiv.classList.add("conversation-form");
-
     conversationDiv.innerHTML = `
         <button type="button" class="conversation-form-button"><i class="ri-emotion-line"></i></button>
         <div class="conversation-form-group">
             <textarea class="conversation-form-input" rows="1" placeholder="Type here..."></textarea>
             <button type="button" class="conversation-form-record"><i class="ri-mic-line"></i></button>
         </div>
-        <button type="button" class="conversation-form-button conversation-form-submit"><i class="ri-send-plane-2-line"></i></button>
+        <button type="button" id="submitButton" class="conversation-form-button conversation-form-submit"><i class="ri-send-plane-2-line"></i></button>
     `;
+
+    const submitButton = conversationDiv.querySelector('#submitButton');
+    //SEND MESSAGE BUTTON EXECUTION
+    submitButton.addEventListener('click', (event) => {
+        const inputData = conversationDiv.querySelector('.conversation-form-input').value;
+        console.log(inputData);
+        console.log(chat_id_current)
+        sendMessage(session_id, chat_id_current, inputData, new Date());
+    });
 
     return conversationDiv;
 }
 
+
+
 // WS MESSAGE FUNCTION
 
-function newSubcription(chat_id){
-    client.subcribe(`/app/${session_id}/${chat_id}`);
+function newSubscription(chat_id){
+    client.subscribe(`/app/${session_id}/${chat_id}`);
 }
-function sendMessage(session_id,chat_id,message,timestamp){
+function sendMessage(session_id, chat_id, message, timestamp) {
     client.publish({
         destination: `/app/${session_id}/${chat_id}/sendm`,
-        body: JSON.stringify(session_id,chat_id,message,timestamp),
-    })
+        body: JSON.stringify({ session_id, chat_id, message, timestamp }),
+    });
 }
-function unsubcribe(chat_id){
+function unsubscribe(chat_id){
     client.unsubscribe(`/app/${session_id}/${chat_id}`);
 }
 
@@ -312,30 +344,37 @@ document.querySelectorAll('.conversation-form-input').forEach(function (item) {
     })
 })
 
-//SEND MESSAGE BUTTON EXECUTION
-conversationFormButtons.submitMessage.addEventListener('click', (event) => {
-    sendMessage(session_id,chat_id_current,inputData,new Date());
-})
-
 // CREATE CHATROOM POPUP
+
 document.addEventListener('DOMContentLoaded', (event) => {
-    const popup = document.getElementById("popup");
-    const popupSearchInput = document.getElementById("popupSearchInput");
-    const popupSearchResults = document.getElementById("popupSearchResults");
-    const selectedItems = document.getElementById("selectedItems");
-    const groupNameInput = document.getElementById("groupName");
-    const createGroupBtn = document.querySelector(".create-group-btn");
+    const createChatButton = document.querySelector('.create-chat');
+    const popup = document.getElementById('popup');
+    const closeButton = document.querySelector('.close-button');
+    const popupSearchInput = document.getElementById('popupSearchInput');
+    const popupSearchResults = document.getElementById('popupSearchResults');
+    const selectedItems = document.getElementById('selectedItems');
+    const groupNameInput = document.getElementById('groupName');
+    const createGroupBtn = document.querySelector('.create-group-btn');
 
     let selectedUserIds = [];
 
-    window.huybeo = function huybeo() {
-        popup.style.display = "block";
+    // Function to show the popup
+    function showPopup() {
+        popup.style.display = 'block';
     }
 
-    window.closePopup = function closePopup() {
-        popup.style.display = "none";
+    // Function to close the popup
+    function closePopup() {
+        popup.style.display = 'none';
     }
 
+    // Event listener for the create chat button
+    createChatButton.addEventListener('click', showPopup);
+
+    // Event listener for the close button
+    closeButton.addEventListener('click', closePopup);
+
+    // Event listener for closing the popup when clicking outside
     window.onclick = function(event) {
         if (event.target == popup) {
             popup.style.display = "none";
@@ -434,112 +473,5 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 alert("Failed to create chatroom");
             });
     }
-
-    // Expose functions to global scope
-    window.huybeo = huybeo;
-    window.closePopup = closePopup;
 });
-
-var selectedUserIds = []; // Array to store selected user IDs
-
-popupSearchInput.onkeyup = function() {
-    var filter = popupSearchInput.value.toLowerCase();
-
-    // Send POST request to fetch user data based on filter
-    fetch(`/app/${session_id}/find`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ info: filter })
-    })
-        .then(response => {
-            if (response.ok) {
-                return response.json();
-            } else {
-                throw new Error('Failed to fetch users');
-            }
-        })
-        .then(data => {
-            popupSearchResults.innerHTML = "";
-            var filteredData = data.filter(item => item.name.toLowerCase().includes(filter));
-            filteredData.forEach(item => {
-                var li = document.createElement("li");
-                li.textContent = item.name;
-                li.onclick = function() {
-                    addItem(item); // Add user object instead of just name
-                };
-                popupSearchResults.appendChild(li);
-            });
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            popupSearchResults.innerHTML = "<li>Failed to fetch users</li>";
-        });
-}
-
-function addItem(item) {
-    selectedUserIds.push(item.user_id); // Store the user_id
-    var li = document.createElement("li");
-    li.textContent = item.name;
-    li.onclick = function() {
-        selectedItems.removeChild(li);
-        selectedUserIds = selectedUserIds.filter(id => id !== item.user_id); // Remove the user_id from the array
-    };
-    selectedItems.appendChild(li);
-}
-
-createGroupBtn.onclick = function() {
-    var groupName = groupNameInput.value;
-
-    // Create payload
-    var payload = new URLSearchParams();
-    payload.append('name', groupName);
-
-    // Send POST request to create chatroom
-    fetch(`/app/${session_id}/createChatroom`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: payload
-    })
-        .then(response => {
-            if (response.ok) {
-                return response.text(); // Assuming chatId is returned as plain text
-            } else {
-                throw new Error('Failed to create chatroom');
-            }
-        })
-        .then(chatId => {
-            alert("Nhóm đã tạo với tên: " + groupName + " và các thành viên: " + selectedUserIds.join(", "));
-            popup.style.display = "none";
-            selectedItems.innerHTML = "";
-            groupNameInput.value = "";
-
-            // Add each user to the newly created chat room
-            selectedUserIds.forEach(userId => {
-                fetch(`/app/${session_id}/${newlyCreatedChatId}/${userId}/add`, {
-                    method: 'GET'
-                })
-                    .then(response => {
-                        if (response.ok) {
-                            console.log(`User ${userId} added to chat ${chatId}`);
-                        } else {
-                            throw new Error(`Failed to add user ${userId} to chat ${chatId}`);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
-            });
-
-            // Clear the selectedUserIds array after adding users to the chat room
-            selectedUserIds = [];
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert("Failed to create chatroom");
-        });
-}
 

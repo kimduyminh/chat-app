@@ -13,7 +13,6 @@ CREATE TABLE friendship (
                             FOREIGN KEY(user_id2) REFERENCES [user](user_id)
 );
 CREATE TABLE message (
-                         message_id INT PRIMARY KEY IDENTITY(1,1),
                          user_id NVARCHAR(50) FOREIGN KEY REFERENCES [user],
                          chat_id NVARCHAR(50),
                          message NVARCHAR(MAX),

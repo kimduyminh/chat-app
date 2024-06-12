@@ -19,9 +19,10 @@ public class chatroomController {
         return ResponseEntity.ok(chatroomService.createChatRoom(session_id,name));
     }
     @GetMapping("/app/{session_id}/loadchat")
-    public ResponseEntity<List<chatroomService.chatroomInfo>> loadChat(@PathVariable String session_id) {
-        return ResponseEntity.ok(chatroomService.listChatRoom(session_id));
+    public List<chatroomService.chatroomInfo> loadChat(@PathVariable String session_id) {
+        return chatroomService.listChatRoom(session_id);
     }
+
     @GetMapping("/app/{session_id}/{chatid}/delete")
     public String deleteChat(@PathVariable String session_id,@PathVariable String chatid) {
         chatroomService.deleteChatRoom(session_id,chatid);

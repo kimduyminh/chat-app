@@ -36,30 +36,35 @@ public class messageService {
             }
         }
     }
-    public List<message> listMessages(String session_id,String chat_id){
-        if(sessionService.checkSession(session_id)){
-            if(chatRoomService.checkUserExistsInChatroom(session_id,chat_id)){
-                List<message> listMessageData=new ArrayList<>();
-                String listMessageQuery="select * from message where chat_id=?";
-                try{
-                    Connection listMessageConnection= dataSource.getConnection();
-                    PreparedStatement listMessagePreparedStatement=listMessageConnection.prepareStatement(listMessageQuery);
-                    listMessagePreparedStatement.setString(1,chat_id);
-                    ResultSet listMessageResultSet=listMessagePreparedStatement.executeQuery();
-                    if(listMessageResultSet.next()){
-                        message message=new message();
-                        message.setChat_id(chat_id);
-                        message.setUser_id(listMessageResultSet.getString("user_id"));
-                        message.setMessage(listMessageResultSet.getString("message"));
-                        message.setTime(listMessageResultSet.getTimestamp("time"));
-                        listMessageData.add(message);
+    public List<message> listMessages(String session_id, String chat_id) {
+        if (sessionService.checkSession(session_id)) {
+            if (chatRoomService.checkUserExistsInChatroom(session_id, chat_id)) {
+                List<message> listMessageData = new ArrayList<>();
+                String listMessageQuery = "select * from message where chat_id = ?";
+                try (Connection listMessageConnection = dataSource.getConnection();
+                     PreparedStatement listMessagePreparedStatement = listMessageConnection.prepareStatement(listMessageQuery)) {
+
+                    listMessagePreparedStatement.setString(1, chat_id);
+                    try (ResultSet listMessageResultSet = listMessagePreparedStatement.executeQuery()) {
+                        while (listMessageResultSet.next()) { // Changed to while loop
+                            message message = new message();
+                            message.setChat_id(chat_id);
+                            message.setUser_id(listMessageResultSet.getString("user_id"));
+                            message.setMessage(listMessageResultSet.getString("message"));
+                            message.setTime(listMessageResultSet.getTimestamp("time"));
+                            message.setSentBySession(message.getUser_id().equals(sessionService.getUserIdFromSession(session_id)));
+                            listMessageData.add(message);
+                        }
                     }
-                    return listMessageData;
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
-            }else{return null;}
+                return listMessageData;
+            } else {
+                return new ArrayList<>(); // Return empty list instead of null
+            }
         }
-        return null;
+        return new ArrayList<>(); // Return empty list instead of null
     }
+
 }

@@ -10,24 +10,21 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import com.project1.chatapp.sessions.sessionService;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Controller
+@RestController
 public class messageController {
     @Autowired
     private messageService messageService;
     @Autowired
     private sessionService sessionService;
-    private final SimpMessagingTemplate messagingTemplate;
-
-    public messageController(SimpMessagingTemplate messagingTemplate) {
-        this.messagingTemplate = messagingTemplate;
-    }
 
     @MessageMapping("/app/{session_id}/{chat_id}/sendm")
     @SendTo("/app/{session_id}/{chat_id}")
     public message newMessage(@Payload message message,String chat_id,String session_id) {
+        System.out.println("message received");
         messageService.newMessage(message,chat_id,session_id);
         return message;
     }

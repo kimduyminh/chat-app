@@ -1,9 +1,6 @@
 package com.project1.chatapp.message;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
@@ -12,10 +9,13 @@ import java.sql.Timestamp;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Getter
+@Setter
 @Builder
 public class message {
     private String user_id;
     private String message;
     private String chat_id;
     private Timestamp time;
+    private boolean sentBySession;
 }
