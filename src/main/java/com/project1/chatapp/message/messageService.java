@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class messageService {
@@ -21,25 +23,48 @@ public class messageService {
     private DataSource dataSource;
     @Autowired
     private chatroomService chatRoomService;
-    public void newMessage(@Payload message message,String session_id,String chat_id){
+    public void newMessage(message message, String session_id, String chat_id){
+        // Sử dụng đối tượng 'message' được truyền vào thay vì 'message1' được inject
+        System.out.println(session_id + " calling newMessage + " + getUserIdFromSession(session_id));
         if(sessionService.checkSession(session_id)){
-            String newMessageQuery="insert into master.dbo.message(user_id,chat_id,message,time) values (?,?,?,?)";
-            try{
-                Connection newMessageConnection= dataSource.getConnection();
-                PreparedStatement newMessagePreparedStatement=newMessageConnection.prepareStatement(newMessageQuery);
-                newMessagePreparedStatement.setString(1,sessionService.getUserIdFromSession(session_id));
-                newMessagePreparedStatement.setString(2,chat_id);
-                newMessagePreparedStatement.setString(3,message.getMessage());
-                newMessagePreparedStatement.setTimestamp(4,message.getTime());
+            String newMessageQuery = "insert into master.dbo.message (user_id, chat_id, message, time) values (?, ?, ?, ?)";
+            try(Connection newMessageConnection = dataSource.getConnection();
+                PreparedStatement newMessagePreparedStatement = newMessageConnection.prepareStatement(newMessageQuery)) {
+
+                // Sử dụng getters từ đối tượng 'message' được truyền vào
+                newMessagePreparedStatement.setString(1, getUserIdFromSession(session_id));
+                newMessagePreparedStatement.setString(2, chat_id);
+                newMessagePreparedStatement.setString(3, message.getMessage());
+                newMessagePreparedStatement.setTimestamp(4, message.getTime());
                 newMessagePreparedStatement.executeUpdate();
-                newMessagePreparedStatement.close();
-                newMessageConnection.close();
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
         }
     }
-    public List<message> listMessages(String session_id, String chat_id) {
+
+    public String getUserIdFromSession(String session_id){
+        String userId="";
+        String getUserIdFromSessionQuery="select user_id from master.dbo.sessions where session_id=?";
+        try {
+            Connection getUserIdFromSessionConnection=dataSource.getConnection();
+            PreparedStatement getUserIdFromSessionStatement=getUserIdFromSessionConnection.prepareStatement(getUserIdFromSessionQuery);
+            getUserIdFromSessionStatement.setString(1,session_id);
+            ResultSet getUserIdFromSessionResult=getUserIdFromSessionStatement.executeQuery();
+            if (getUserIdFromSessionResult.next()){
+                userId=getUserIdFromSessionResult.getString("user_id");
+            }
+            getUserIdFromSessionConnection.close();
+            getUserIdFromSessionStatement.close();
+            getUserIdFromSessionResult.close();
+            return userId;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public Map<String, Object> listMessages(String session_id, String chat_id) {
+        Map<String, Object> response = new HashMap<>();
+        System.out.println("calling listMessages");
         if (sessionService.checkSession(session_id)) {
             if (chatRoomService.checkUserExistsInChatroom(session_id, chat_id)) {
                 List<message> listMessageData = new ArrayList<>();
@@ -49,7 +74,7 @@ public class messageService {
 
                     listMessagePreparedStatement.setString(1, chat_id);
                     try (ResultSet listMessageResultSet = listMessagePreparedStatement.executeQuery()) {
-                        while (listMessageResultSet.next()) { // Changed to while loop
+                        while (listMessageResultSet.next()) {
                             message message = new message();
                             message.setChat_id(chat_id);
                             message.setUser_id(listMessageResultSet.getString("user_id"));
@@ -62,12 +87,15 @@ public class messageService {
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
-                return listMessageData;
+                response.put("messages", listMessageData); // Add the messages to the response map
+                return response; // Return the map instead of just the list
             } else {
-                return new ArrayList<>(); // Return empty list instead of null
+                response.put("messages", new ArrayList<>()); // Return empty list in the map
+                return response;
             }
         }
-        return new ArrayList<>(); // Return empty list instead of null
+        response.put("messages", new ArrayList<>()); // Return empty list in the map
+        return response;
     }
 
 }

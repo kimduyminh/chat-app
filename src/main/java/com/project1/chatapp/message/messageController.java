@@ -1,6 +1,10 @@
 package com.project1.chatapp.message;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -11,9 +15,16 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import com.project1.chatapp.sessions.sessionService;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.sql.DataSource;
+import java.sql.*;
 import java.util.List;
+import java.util.Map;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 @RestController
 public class messageController {
@@ -21,20 +32,81 @@ public class messageController {
     private messageService messageService;
     @Autowired
     private sessionService sessionService;
+    @Autowired
+    private DataSource dataSource;
 
+    @Getter
+    @Setter
+    @Component
+    public static class sessionInfo{
+        private String session_id;
+        private String chat_id;
+        private String message;
+        private String timestamp;
+    }
+
+    // Sử dụng @Payload thay vì @RequestBody và chỉ định kiểu của 'sessionInfo'
     @MessageMapping("/{session_id}/{chat_id}/sendm")
     @SendTo("/topic/{session_id}/{chat_id}")
-    public message newMessage(@Payload message message,@DestinationVariable String chat_id,@DestinationVariable String session_id) {
+    public message newMessage(@Payload sessionInfo sessionInfo) {
         System.out.println("message received");
-        System.out.println(message.getMessage());
+
+        // Tạo một đối tượng 'message' mới từ thông tin trong 'sessionInfo'
+        message message = new message();
+        message.setUser_id(getUserIdFromSession(sessionInfo.getSession_id())); // Giả sử bạn có phương thức này
+        message.setChat_id(sessionInfo.getChat_id());
+        message.setMessage(sessionInfo.getMessage());
+        String formattedTimestamp = TimestampConverter.convertTimestamp(sessionInfo.getTimestamp()); // Huy Tran cook this
+        message.setTime(Timestamp.valueOf(formattedTimestamp)); // Chuyển đổi String thành Timestamp
+
         System.out.println(message.getUser_id());
         System.out.println(message.getChat_id());
-        messageService.newMessage(message,chat_id,session_id);
+
+        // Gọi service với đối tượng 'message' mới tạo
+        messageService.newMessage(message, sessionInfo.getSession_id(), sessionInfo.getChat_id());
+
         return message;
     }
+
+    // force fix
+    public String getUserIdFromSession(String session_id){
+        String userId="";
+        String getUserIdFromSessionQuery="select user_id from master.dbo.sessions where session_id=?";
+        try {
+            Connection getUserIdFromSessionConnection=dataSource.getConnection();
+            PreparedStatement getUserIdFromSessionStatement=getUserIdFromSessionConnection.prepareStatement(getUserIdFromSessionQuery);
+            getUserIdFromSessionStatement.setString(1,session_id);
+            ResultSet getUserIdFromSessionResult=getUserIdFromSessionStatement.executeQuery();
+            if (getUserIdFromSessionResult.next()){
+                userId=getUserIdFromSessionResult.getString("user_id");
+            }
+            getUserIdFromSessionConnection.close();
+            getUserIdFromSessionStatement.close();
+            getUserIdFromSessionResult.close();
+            return userId;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public class TimestampConverter {
+        private static final SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+        private static final SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+
+        public static String convertTimestamp(String inputTimestamp) {
+            try {
+                Date parsedDate = inputFormat.parse(inputTimestamp);
+                return outputFormat.format(parsedDate);
+            } catch (ParseException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+    }
+
     @GetMapping("/app/{session_id}/{chat_id}/loadm")
-    public List<message> listMessages(@DestinationVariable("session_id") String session_id, @DestinationVariable("chat_id")String chat_id) {
-        return messageService.listMessages(session_id,chat_id);
+    public Map<String, Object> listMessages(@PathVariable("session_id") String session_id, @PathVariable("chat_id")String chat_id) {
+        return messageService.listMessages(session_id, chat_id);
     }
 
 }

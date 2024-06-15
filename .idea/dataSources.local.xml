@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="dataSourceStorageLocal" created-in="IU-241.15989.150">
-    <data-source name="@localhost" uuid="281bc9f7-a9dd-45f9-a052-79feaa545d6a">
-      <database-info product="Microsoft SQL Server" version="16.00.4120" jdbc-version="4.2" driver-name="Microsoft JDBC Driver 12.2 for SQL Server" driver-version="12.2.0.0" dbms="MSSQL" exact-version="16.0.4120" exact-driver-version="12.2">
+  <component name="dataSourceStorageLocal" created-in="IU-241.17011.79">
+    <data-source name="@localhost" uuid="d22cdd3e-14ad-48c6-bd63-f7002df20ef3">
+      <database-info product="Microsoft SQL Server" version="16.00.4125" jdbc-version="4.2" driver-name="Microsoft JDBC Driver 12.2 for SQL Server" driver-version="12.2.0.0" dbms="MSSQL" exact-version="16.0.4125" exact-driver-version="12.2">
         <extra-name-characters>$#@</extra-name-characters>
         <identifier-quote-string>&quot;</identifier-quote-string>
       </database-info>
