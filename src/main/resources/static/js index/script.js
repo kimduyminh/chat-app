@@ -251,13 +251,24 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 function createConversationUser(name) {
-    const userDiv = document.createElement("div");
-    userDiv.classList.add("conversation-user");
-    userDiv.innerHTML = `
-        <div>
-            <div class="conversation-user-name">${name}</div>
-        </div>
+    // const
+    // userDiv.innerHTML = `
+    //     <div>
+    //         <div class="conversation-user-name">${name}</div>
+    //     </div>
+    // `;
+    // return userDiv;
+
+    const userDiv = document.getElementsByClassName('conversation-user')[0];
+    if (userDiv) {
+        userDiv.innerHTML = ''; // Clear existing content
+        const userHTML = `
+        <div class="conversation-user-name">${name}</div>
     `;
+        userDiv.insertAdjacentHTML('beforeend', userHTML);
+    } else {
+        console.error('No element with class conversation-user found');
+    }
     return userDiv;
 }
 
@@ -302,9 +313,21 @@ function escapeHtml(unsafe) {
 }
 
 function createSubmitForm() {
-    const conversationDiv = document.createElement("div");
-    conversationDiv.classList.add("conversation-form");
-    conversationDiv.innerHTML = `
+    // const conversationDiv = document.createElement("div");
+    // conversationDiv.classList.add("conversation-form");
+    // conversationDiv.innerHTML = '';
+    // conversationDiv.innerHTML = `
+    //     <button type="button" class="conversation-form-button"><i class="ri-emotion-line"></i></button>
+    //     <div class="conversation-form-group">
+    //         <textarea class="conversation-form-input" rows="1" placeholder="Type here..."></textarea>
+    //         <button type="button" class="conversation-form-record"><i class="ri-mic-line"></i></button>
+    //     </div>
+    //     <button type="button" id="submitButton" class="conversation-form-button conversation-form-submit"><i class="ri-send-plane-2-line"></i></button>
+    // `;
+
+    const conversationDiv = document.getElementsByClassName('conversation-form')[0];
+    conversationDiv.innerHTML = '';
+    const conversationHTML = `
         <button type="button" class="conversation-form-button"><i class="ri-emotion-line"></i></button>
         <div class="conversation-form-group">
             <textarea class="conversation-form-input" rows="1" placeholder="Type here..."></textarea>
@@ -312,6 +335,7 @@ function createSubmitForm() {
         </div>
         <button type="button" id="submitButton" class="conversation-form-button conversation-form-submit"><i class="ri-send-plane-2-line"></i></button>
     `;
+    conversationDiv.insertAdjacentHTML('beforeend', conversationHTML);
 
     const submitButton = conversationDiv.querySelector('#submitButton');
     //SEND MESSAGE BUTTON EXECUTION
@@ -320,6 +344,10 @@ function createSubmitForm() {
         console.log(inputData);
         console.log(chat_id_current)
         sendMessage(session_id, chat_id_current, inputData, new Date());
+
+        loadMessages(getSessionID(), chat_id_current);
+
+
     });
 
     return conversationDiv;
@@ -335,7 +363,12 @@ function newSubscription(chat_id){
 function sendMessage(session_id, chat_id, message, timestamp) {
     client.publish({
         destination: `/app/${session_id}/${chat_id}/sendm`,
-        body: JSON.stringify({ session_id, chat_id, message, timestamp }),
+        body: JSON.stringify({
+            session_id: session_id,
+            chat_id: chat_id,
+            message: message,
+            timestamp: timestamp
+        }),
     });
 }
 function unsubscribe(chat_id){
@@ -484,3 +517,37 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
 });
 
+// Huy Tran's work
+function getSessionIdFromUrl() {
+    const queryParams = new URLSearchParams(window.location.search);
+    return queryParams.get('id');
+}
+
+function getSessionID() {
+    const sessionSuperId = getSessionIdFromUrl();
+    return sessionSuperId;
+}
+
+
+async function loadMessages(session_id, chat_id) {
+    console.log('fetching data' + session_id + chat_id);
+    try {
+        const response = await fetch(`/app/${session_id}/${chat_id}/loadm`);
+        if (response.ok) {
+            const responseData = await response.json();
+            console.log('huy tran' + responseData.messages);
+            const chatGrid = document.getElementById('chat-content-fetch');
+            chatGrid.innerHTML = ''; // Clear existing content
+            responseData.messages.forEach(message => { // Sử dụng responseData.messages thay vì listMessageData
+                const chatHTML = `
+                    <p>${message.message}</p>
+                `;
+                chatGrid.insertAdjacentHTML('beforeend', chatHTML);
+            });
+        } else {
+            console.error('Failed to fetch messages');
+        }
+    } catch (error) {
+        console.error('Error fetching messages:', error);
+    }
+}
