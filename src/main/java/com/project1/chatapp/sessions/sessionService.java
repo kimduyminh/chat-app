@@ -24,7 +24,7 @@ public class sessionService {
     }
     public String newSession(String user_id){
         String session_id=idGenerator();
-        String addSessionQuery="insert into sessions(user_id,session_id) values(?,?)";
+        String addSessionQuery="insert into master.dbo.sessions(user_id,session_id) values(?,?)";
         try{
             Connection addSessionConnection=dataSource.getConnection();
             PreparedStatement addSessionPreparedStatement=addSessionConnection.prepareStatement(addSessionQuery);
@@ -41,7 +41,7 @@ public class sessionService {
 
 
     public boolean checkSession(String session_id){
-        String checkSessionQuery="select * from sessions where session_id=?";
+        String checkSessionQuery="select * from master.dbo.sessions where session_id=?";
         try {
             Connection checkSessionConnection=dataSource.getConnection();
             PreparedStatement checkSessionStatement=checkSessionConnection.prepareStatement(checkSessionQuery);
@@ -64,7 +64,7 @@ public class sessionService {
     }
     public String getSessionIdFromUser(String user_id){
         String session_id="";
-        String getUserIdFromSessionQuery="select session_id from sessions where user_id=?";
+        String getUserIdFromSessionQuery="select session_id from master.dbo.sessions where user_id=?";
         try {
             Connection getSessionIdFromUserConnection=dataSource.getConnection();
             PreparedStatement getSessionIdFromUserStatement=getSessionIdFromUserConnection.prepareStatement(getUserIdFromSessionQuery);
@@ -83,7 +83,7 @@ public class sessionService {
     }
     public String getUserIdFromSession(String session_id){
         String userId="";
-        String getUserIdFromSessionQuery="select user_id from sessions where session_id=?";
+        String getUserIdFromSessionQuery="select user_id from master.dbo.sessions where session_id=?";
         try {
             Connection getUserIdFromSessionConnection=dataSource.getConnection();
             PreparedStatement getUserIdFromSessionStatement=getUserIdFromSessionConnection.prepareStatement(getUserIdFromSessionQuery);
@@ -101,7 +101,7 @@ public class sessionService {
         }
     }
     public void deleteSession(String session_id){
-        String deleteSessionQuery="delete from sessions where session_id=?";
+        String deleteSessionQuery="delete from master.dbo.sessions where session_id=?";
         try{
             Connection deleteSessionConnection= dataSource.getConnection();
             PreparedStatement deleteSessionStatement=deleteSessionConnection.prepareStatement(deleteSessionQuery);

@@ -198,7 +198,7 @@ public class chatroomService {
     public void changeChatroomName(String session_id,String chat_id,String name){
         if(sessionService.checkSession(session_id)){
             if (checkUserExistsInChatroom(session_id,chat_id)){
-                String changeChatroomNameQuery="update chatroom set chat_name=? where chat_id=?";
+                String changeChatroomNameQuery="update master.dbo.chatroom set chat_name=? where chat_id=?";
                 try{
                     Connection changeChatroomNameConnection=dataSource.getConnection();
                     PreparedStatement changeChatroomNameStatement=changeChatroomNameConnection.prepareStatement(changeChatroomNameQuery);
@@ -216,7 +216,7 @@ public class chatroomService {
     public void kickFromChatroom(String session_id,String chat_id,String kick_user_id){
         if(sessionService.checkSession(session_id)){
             if(checkUserExistsInChatroom(session_id,chat_id)){
-                String kickUserQuery="delete from joinedchat where user_id=? and chat_id=?";
+                String kickUserQuery="delete from master.dbo.joinedchat where user_id=? and chat_id=?";
                 try{
                     Connection kickUserConnection= dataSource.getConnection();
                     PreparedStatement kickUserStatement=kickUserConnection.prepareStatement(kickUserQuery);

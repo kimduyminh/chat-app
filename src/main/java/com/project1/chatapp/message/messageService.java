@@ -23,7 +23,7 @@ public class messageService {
     private chatroomService chatRoomService;
     public void newMessage(@Payload message message,String session_id,String chat_id){
         if(sessionService.checkSession(session_id)){
-            String newMessageQuery="insert into message(user_id,chat_id,message,time) values (?,?,?,?)";
+            String newMessageQuery="insert into master.dbo.message(user_id,chat_id,message,time) values (?,?,?,?)";
             try{
                 Connection newMessageConnection= dataSource.getConnection();
                 PreparedStatement newMessagePreparedStatement=newMessageConnection.prepareStatement(newMessageQuery);
@@ -31,6 +31,9 @@ public class messageService {
                 newMessagePreparedStatement.setString(2,chat_id);
                 newMessagePreparedStatement.setString(3,message.getMessage());
                 newMessagePreparedStatement.setTimestamp(4,message.getTime());
+                newMessagePreparedStatement.executeUpdate();
+                newMessagePreparedStatement.close();
+                newMessageConnection.close();
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -40,7 +43,7 @@ public class messageService {
         if (sessionService.checkSession(session_id)) {
             if (chatRoomService.checkUserExistsInChatroom(session_id, chat_id)) {
                 List<message> listMessageData = new ArrayList<>();
-                String listMessageQuery = "select * from message where chat_id = ?";
+                String listMessageQuery = "select * from master.dbo.message where chat_id = ?";
                 try (Connection listMessageConnection = dataSource.getConnection();
                      PreparedStatement listMessagePreparedStatement = listMessageConnection.prepareStatement(listMessageQuery)) {
 

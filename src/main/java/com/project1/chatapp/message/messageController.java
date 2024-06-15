@@ -26,6 +26,9 @@ public class messageController {
     @SendTo("/topic/{session_id}/{chat_id}")
     public message newMessage(@Payload message message,@DestinationVariable String chat_id,@DestinationVariable String session_id) {
         System.out.println("message received");
+        System.out.println(message.getMessage());
+        System.out.println(message.getUser_id());
+        System.out.println(message.getChat_id());
         messageService.newMessage(message,chat_id,session_id);
         return message;
     }
