@@ -27,6 +27,12 @@ public class chatroomService {
         private String name;
         private String chat_id;
     }
+    @Component
+    @Getter
+    @Setter
+    public static class newGroup {
+        private String name;
+    }
     @Autowired
     private sessionService sessionService;
     public chatroomService(@Qualifier("dataSource") DataSource dataSource) {
@@ -36,7 +42,7 @@ public class chatroomService {
     private String idGenerator(){
         return UUID.randomUUID().toString();
     }
-    public String createChatRoom(String name,String session_id){
+    public String createChatRoom(newGroup newGroup,String session_id){
         if (sessionService.checkSession(session_id)){
             String createChatRoomQuery="insert into master.dbo.chatroom (chat_id,chat_name) values (?,?)";
             String id_created = idGenerator();
@@ -44,7 +50,7 @@ public class chatroomService {
                 Connection connectionCreateChatRoom=dataSource.getConnection();
                 PreparedStatement preparedStatementCreateChatRoom=connectionCreateChatRoom.prepareStatement(createChatRoomQuery);
                 preparedStatementCreateChatRoom.setString(1,id_created);
-                preparedStatementCreateChatRoom.setString(2,name);
+                preparedStatementCreateChatRoom.setString(2, newGroup.name);
                 preparedStatementCreateChatRoom.executeUpdate();
                 connectionCreateChatRoom.close();
                 preparedStatementCreateChatRoom.close();
@@ -113,7 +119,7 @@ public class chatroomService {
     }
     public void addToChatRoom(String chat_id, String user_id,String session_id){
         if (sessionService.checkSession(session_id)){
-            if(checkUserExistsInChatroom(session_id,chat_id)){
+            if(checkUserExistsInChatroom(session_id,user_id,chat_id)){
                 String inviteToChatRoomQuery="insert into master.dbo.joinedchat (chat_id,user_id) values (?,?)";
                 try{
                     Connection connectionInviteToChatRoom= dataSource.getConnection();
@@ -151,6 +157,26 @@ public class chatroomService {
     public boolean checkUserExistsInChatroom(String session_id,String chat_id){
         if (sessionService.checkSession(session_id)){
             String user_id=sessionService.getUserIdFromSession(session_id);
+            String checkUserExistsQuery="select * from master.dbo.joinedchat where chat_id=? and user_id = ?";
+            try{
+                Connection checkUserExistsConnection= dataSource.getConnection();
+                PreparedStatement preparedStatementCheckUserExists=checkUserExistsConnection.prepareStatement(checkUserExistsQuery);
+                preparedStatementCheckUserExists.setString(1,chat_id);
+                preparedStatementCheckUserExists.setString(2,user_id);
+                ResultSet resultSetCheckUserExists=preparedStatementCheckUserExists.executeQuery();
+                boolean result=resultSetCheckUserExists.next();
+                checkUserExistsConnection.close();
+                preparedStatementCheckUserExists.close();
+                resultSetCheckUserExists.close();
+                return result;
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return false;
+    }
+    public boolean checkUserExistsInChatroom(String session_id,String user_id,String chat_id){
+        if (sessionService.checkSession(session_id)){
             String checkUserExistsQuery="select * from master.dbo.joinedchat where chat_id=? and user_id = ?";
             try{
                 Connection checkUserExistsConnection= dataSource.getConnection();
