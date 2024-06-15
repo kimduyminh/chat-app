@@ -4,6 +4,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const searchInput = document.getElementById("searchInput");
     const addFriendBtn = document.getElementById("addFriendBtn");
 
+    // var chatLink = document.getElementById("chat-link");
+    // var contactsLink = document.getElementById("contacts-link");
+    // chatLink.href = `mainchat.html?id=${session_id}`;
+    // contactsLink.href = `friendlist.html?id=${session_id}`;
     // Dummy data
     let friends = ["Alice", "Bob", "Charlie"];
     let friendRequests = ["David", "Eve"];
@@ -90,3 +94,23 @@ document.addEventListener("DOMContentLoaded", function () {
     listFriends();
     loadFriendRequests();
 });
+
+function getSessionIdFromUrl() {
+    const queryParams = new URLSearchParams(window.location.search);
+    return queryParams.get('id');
+}
+
+function getSessionID() {
+    const sessionSuperId = getSessionIdFromUrl();
+    return sessionSuperId;
+}
+
+function chat_Link() {
+    console.log(getSessionID());
+    window.location.href = `mainchat.html?id=${getSessionID()}`;
+}
+
+function contact_Link() {
+    console.log(getSessionID());
+    window.location.href = `friendlist.html?id=${getSessionID()}`;
+}
