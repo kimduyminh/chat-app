@@ -1,6 +1,7 @@
 package com.project1.chatapp.message;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -21,15 +22,15 @@ public class messageController {
     @Autowired
     private sessionService sessionService;
 
-    @MessageMapping("/app/{session_id}/{chat_id}/sendm")
-    @SendTo("/app/{session_id}/{chat_id}")
-    public message newMessage(@Payload message message,String chat_id,String session_id) {
+    @MessageMapping("/{session_id}/{chat_id}/sendm")
+    @SendTo("/topic/{session_id}/{chat_id}")
+    public message newMessage(@Payload message message,@DestinationVariable String chat_id,@DestinationVariable String session_id) {
         System.out.println("message received");
         messageService.newMessage(message,chat_id,session_id);
         return message;
     }
     @GetMapping("/app/{session_id}/{chat_id}/loadm")
-    public List<message> listMessages(@PathVariable("session_id") String session_id, @PathVariable("chat_id")String chat_id) {
+    public List<message> listMessages(@DestinationVariable("session_id") String session_id, @DestinationVariable("chat_id")String chat_id) {
         return messageService.listMessages(session_id,chat_id);
     }
 

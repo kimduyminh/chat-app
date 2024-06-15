@@ -1,7 +1,7 @@
 // MAPPING ELEMENTS
 const session_id=getSessionIdFromQuery();
 let chat_id_current="";
-let client;
+let client =null;
 const conversationFormButtons = {
     emotion: document.querySelector(".conversation-form-button .ri-emotion-line"),
     record: document.querySelector(".conversation-form-record .ri-mic-line"),
@@ -185,7 +185,8 @@ document.querySelectorAll('.conversation-back').forEach(function (item) {
     })
 })
 
-document.addEventListener("DOMContentLoaded", () => {
+// Define loadchat globally
+function loadchat(session_id) {
     fetch(`/app/${session_id}/loadchat`)
         .then(response => response.json())
         .then(data => {
@@ -209,7 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     const userDiv = createConversationUser(chatroomInfo.name);
                     document.querySelector(".conversation").prepend(userDiv);
                     newSubscription(conversationId);
-                    chat_id_current=conversationId;
+                    chat_id_current = conversationId;
 
                     // Clear the existing conversation items
                     const conversationList = document.querySelector(".conversation-list");
@@ -241,7 +242,13 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         })
         .catch(error => console.error('Error:', error));
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    loadchat(session_id);
 });
+
+
 
 function createConversationUser(name) {
     const userDiv = document.createElement("div");
@@ -323,7 +330,7 @@ function createSubmitForm() {
 // WS MESSAGE FUNCTION
 
 function newSubscription(chat_id){
-    client.subscribe(`/app/${session_id}/${chat_id}`);
+    client.subscribe(`/topic/${session_id}/${chat_id}`);
 }
 function sendMessage(session_id, chat_id, message, timestamp) {
     client.publish({
@@ -332,7 +339,7 @@ function sendMessage(session_id, chat_id, message, timestamp) {
     });
 }
 function unsubscribe(chat_id){
-    client.unsubscribe(`/app/${session_id}/${chat_id}`);
+    client.unsubscribe(`/topic/${session_id}/${chat_id}`);
 }
 
 // MESSAGE DATA
@@ -427,15 +434,16 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     createGroupBtn.onclick = function() {
         const groupName = groupNameInput.value;
-        const payload = new URLSearchParams();
-        payload.append('name', groupName);
+        const newGroup = {
+            name: groupName
+        }
 
         fetch(`/app/${session_id}/createChatroom`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/json'
             },
-            body: payload
+            body: JSON.stringify(newGroup)
         })
             .then(response => {
                 if (response.ok) {
@@ -472,6 +480,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 console.error('Error:', error);
                 alert("Failed to create chatroom");
             });
+        loadchat(session_id);
     }
 });
 
