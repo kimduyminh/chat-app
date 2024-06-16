@@ -353,12 +353,17 @@ function createSubmitForm() {
     return conversationDiv;
 }
 
-
+function callback(message){
+    const conversationList = document.querySelector(".conversation-list");
+    conversationList.innerHTML = '';
+    conversationItem=createConversationItem(message);
+    conversationList.appendChild(conversationItem);
+}
 
 // WS MESSAGE FUNCTION
 
 function newSubscription(chat_id){
-    client.subscribe(`/topic/${session_id}/${chat_id}`);
+    client.subscribe(`/topic/${session_id}/${chat_id}`,callback);
 }
 function sendMessage(session_id, chat_id, message, timestamp) {
     client.publish({
