@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
     const friendList = document.getElementById("friendList");
     const friendRequestsList = document.getElementById("friendRequestsList");
-    const searchInput = document.getElementById("searchInput");
+    const searchFriendInput = document.getElementById("searchFriendInput");
     const addFriendBtn = document.getElementById("addFriendBtn");
 
     // var chatLink = document.getElementById("chat-link");
@@ -73,8 +73,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Event listener for search input
-    searchInput.addEventListener("input", function () {
-        const query = searchInput.value.trim();
+    searchFriendInput.addEventListener("input", function () {
+        const query = searchFriendInput.value.trim();
         if (query) {
             findFriend(query);
         } else {
@@ -94,16 +94,6 @@ document.addEventListener("DOMContentLoaded", function () {
     listFriends();
     loadFriendRequests();
 });
-
-function getSessionIdFromUrl() {
-    const queryParams = new URLSearchParams(window.location.search);
-    return queryParams.get('id');
-}
-
-function getSessionID() {
-    const sessionSuperId = getSessionIdFromUrl();
-    return sessionSuperId;
-}
 
 function chat_Link() {
     console.log(getSessionID());

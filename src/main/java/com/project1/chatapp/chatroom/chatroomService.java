@@ -45,6 +45,7 @@ public class chatroomService {
     public String createChatRoom(newGroup newGroup,String session_id){
         if (sessionService.checkSession(session_id)){
             String createChatRoomQuery="insert into master.dbo.chatroom (chat_id,chat_name) values (?,?)";
+            String addUserToChatroomQuery="insert into master.dbo.joinedchat (chat_id,user_id) values (?,?)";
             String id_created = idGenerator();
             try{
                 Connection connectionCreateChatRoom=dataSource.getConnection();
@@ -52,8 +53,13 @@ public class chatroomService {
                 preparedStatementCreateChatRoom.setString(1,id_created);
                 preparedStatementCreateChatRoom.setString(2, newGroup.name);
                 preparedStatementCreateChatRoom.executeUpdate();
+                PreparedStatement preparedStatementAddUserToChatroom=connectionCreateChatRoom.prepareStatement(addUserToChatroomQuery);
+                preparedStatementAddUserToChatroom.setString(1,id_created);
+                preparedStatementAddUserToChatroom.setString(2,sessionService.getUserIdFromSession(session_id));
+                preparedStatementAddUserToChatroom.executeUpdate();
                 connectionCreateChatRoom.close();
                 preparedStatementCreateChatRoom.close();
+                preparedStatementAddUserToChatroom.close();
                 return id_created;
             } catch (SQLException e) {
                 throw new RuntimeException(e);

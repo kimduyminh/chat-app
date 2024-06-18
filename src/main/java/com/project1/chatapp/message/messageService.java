@@ -27,7 +27,7 @@ public class messageService {
         // Sử dụng đối tượng 'message' được truyền vào thay vì 'message1' được inject
         System.out.println(session_id + " calling newMessage + " + getUserIdFromSession(session_id));
         if(sessionService.checkSession(session_id)){
-            String newMessageQuery = "insert into master.dbo.message (user_id, chat_id, message, time) values (?, ?, ?, ?)";
+            String newMessageQuery = "insert into master.dbo.message (user_id, chat_id, message, time) values (?, ?, ?, ?) ";
             try(Connection newMessageConnection = dataSource.getConnection();
                 PreparedStatement newMessagePreparedStatement = newMessageConnection.prepareStatement(newMessageQuery)) {
 
@@ -68,7 +68,7 @@ public class messageService {
         if (sessionService.checkSession(session_id)) {
             if (chatRoomService.checkUserExistsInChatroom(session_id, chat_id)) {
                 List<message> listMessageData = new ArrayList<>();
-                String listMessageQuery = "select * from master.dbo.message where chat_id = ?";
+                String listMessageQuery = "select * from master.dbo.message where chat_id = ? ORDER BY [time]";
                 try (Connection listMessageConnection = dataSource.getConnection();
                      PreparedStatement listMessagePreparedStatement = listMessageConnection.prepareStatement(listMessageQuery)) {
 

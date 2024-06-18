@@ -21,7 +21,6 @@ public class chatroomController {
     public ResponseEntity<String> createChatroom(@PathVariable String session_id, @RequestBody chatroomService.newGroup newGroup) {
         String newChatId=chatroomService.createChatRoom(newGroup,session_id);
         System.out.println(newChatId+ " new chat id");
-        chatroomService.addToChatRoom(newChatId,sessionService.getUserIdFromSession(session_id),session_id);
         return ResponseEntity.ok("OK");
     }
     @GetMapping("/app/{session_id}/loadchat")
