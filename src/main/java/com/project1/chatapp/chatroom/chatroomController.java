@@ -3,7 +3,6 @@ package com.project1.chatapp.chatroom;
 import com.project1.chatapp.sessions.sessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.project1.chatapp.user.userService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.project1.chatapp.message.messageService;
@@ -20,8 +19,7 @@ public class chatroomController {
     private sessionService sessionService;
     @PostMapping("/app/{session_id}/createChatroom")
     public ResponseEntity<String> createChatroom(@PathVariable String session_id, @RequestBody chatroomService.newGroup newGroup) {
-        String newChatId=chatroomService.createChatRoom(newGroup,session_id);
-        System.out.println(newChatId+ " new chat id");
+        chatroomService.createChatRoom(newGroup, session_id);
         return ResponseEntity.ok("OK");
     }
     @GetMapping("/app/{session_id}/loadchat")
@@ -29,25 +27,23 @@ public class chatroomController {
         return chatroomService.listChatRoom(session_id);
     }
 
-    @GetMapping("/app/{session_id}/{chatid}/delete")
-    public String deleteChat(@PathVariable String session_id,@PathVariable String chatid) {
-        chatroomService.deleteChatRoom(session_id,chatid);
-        return "Chatroom deleted";
+    @GetMapping("/app/{session_id}/{chat_id}/delete")
+    public ResponseEntity<String> deleteChat(@PathVariable String session_id, @PathVariable String chat_id) {
+        chatroomService.deleteChatRoom(chat_id, session_id);
+        return ResponseEntity.ok("OK");
     }
     @GetMapping("/app/{session_id}/{chat_id}/{user_id}/add")
     public String addToChatRoom(@PathVariable String session_id,@PathVariable String chat_id,@PathVariable String user_id) {
         chatroomService.addToChatRoom(session_id,chat_id,user_id);
         return "User added";
     }
-    @GetMapping("/app/{session_id}/{chat_id}/changename")
-    public String changeName(@PathVariable String session_id, @PathVariable String chat_id, @RequestBody String name) {
+    @PostMapping("/app/{session_id}/{chat_id}/changename")
+    public ResponseEntity<String> changeName(@PathVariable String session_id, @PathVariable String chat_id, @RequestBody chatroomService.name name) {
         chatroomService.changeChatroomName(session_id,chat_id,name);
-        return "Chatroom name changed";
+        return ResponseEntity.ok("OK");
     }
     @GetMapping("/app/{session_id}/{chat_id}/{user_id}/kick")
     public ResponseEntity<String> kickFromChatroom(@PathVariable String session_id,@PathVariable String chat_id,@PathVariable String user_id) {
-        System.out.println("Kick test");
-        System.out.println(user_id);
         chatroomService.kickFromChatroom(session_id,chat_id,user_id);
         return ResponseEntity.ok("OK");
     }

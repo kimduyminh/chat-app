@@ -34,6 +34,12 @@ public class chatroomService {
     public static class newGroup {
         private String name;
     }
+    @Component
+    @Getter
+    @Setter
+    public static class name{
+        private String name;
+    }
     @Autowired
     private sessionService sessionService;
     @Autowired
@@ -99,33 +105,42 @@ public class chatroomService {
         }
     }
 
-    public void deleteChatRoom(String chat_id,String session_id){
-        if (sessionService.checkSession(session_id)){
-            if(checkUserExistsInChatroom(session_id,chat_id)){
-                String deleteChatRoomQueryJoinedChat="delete from master.dbo.joinedchat where chat_id=?";
-                String deleteChatRoomQueryChatRoom="delete from master.dbo.chatroom where chat_id=?";
-                String deleteChatRoomQueryMessage="delete from master.dbo.message where chat_id=?";
-                try{
-                    Connection connectionDeleteChatRoom= dataSource.getConnection();
-                    PreparedStatement preparedStatementQueryJoinedChat=connectionDeleteChatRoom.prepareStatement(deleteChatRoomQueryJoinedChat);
-                    preparedStatementQueryJoinedChat.setString(1,chat_id);
-                    preparedStatementQueryJoinedChat.executeUpdate();
-                    preparedStatementQueryJoinedChat.close();
-                    PreparedStatement preparedStatementQueryChatRoom=connectionDeleteChatRoom.prepareStatement(deleteChatRoomQueryChatRoom);
-                    preparedStatementQueryChatRoom.setString(1,chat_id);
-                    preparedStatementQueryChatRoom.executeUpdate();
-                    preparedStatementQueryChatRoom.close();
-                    PreparedStatement preparedStatementQueryMessage=connectionDeleteChatRoom.prepareStatement(deleteChatRoomQueryMessage);
-                    preparedStatementQueryMessage.setString(1,chat_id);
-                    preparedStatementQueryMessage.executeUpdate();
-                    preparedStatementQueryMessage.close();
-                    connectionDeleteChatRoom.close();
+    public void deleteChatRoom(String chat_id, String session_id) {
+        System.out.println("Entered deleteChatRoom function");
+        if (sessionService.checkSession(session_id)) {
+            if (checkUserExistingInChatroom(session_id, chat_id)) {
+                String deleteChatRoomQueryJoinedChat = "DELETE FROM master.dbo.joinedchat WHERE chat_id = ?";
+                String deleteChatRoomQueryChatRoom = "DELETE FROM master.dbo.chatroom WHERE chat_id = ?";
+                String deleteChatRoomQueryMessage = "DELETE FROM master.dbo.message WHERE chat_id = ?";
+                try (Connection connectionDeleteChatRoom = dataSource.getConnection()) {
+
+                    try (PreparedStatement preparedStatementQueryJoinedChat = connectionDeleteChatRoom.prepareStatement(deleteChatRoomQueryJoinedChat)) {
+                        preparedStatementQueryJoinedChat.setString(1, chat_id);
+                        preparedStatementQueryJoinedChat.executeUpdate();
+                    }
+
+                    try (PreparedStatement preparedStatementQueryChatRoom = connectionDeleteChatRoom.prepareStatement(deleteChatRoomQueryChatRoom)) {
+                        preparedStatementQueryChatRoom.setString(1, chat_id);
+                        preparedStatementQueryChatRoom.executeUpdate();
+                    }
+
+                    try (PreparedStatement preparedStatementQueryMessage = connectionDeleteChatRoom.prepareStatement(deleteChatRoomQueryMessage)) {
+                        preparedStatementQueryMessage.setString(1, chat_id);
+                        preparedStatementQueryMessage.executeUpdate();
+                    }
+
                 } catch (SQLException e) {
-                    throw new RuntimeException(e);
+                    e.printStackTrace();
+                    throw new RuntimeException("Error deleting chat room: " + e.getMessage(), e);
                 }
+            } else {
+                System.out.println("User does not exist in chatroom");
             }
+        } else {
+            System.out.println("Invalid session");
         }
     }
+
     public void addToChatRoom(String chat_id, String user_id,String session_id){
         if (sessionService.checkSession(session_id)){
             if(checkUserExistsInChatroom(session_id,user_id,chat_id)){
@@ -163,27 +178,28 @@ public class chatroomService {
         }
     }
 
-    public boolean checkUserExistsInChatroom(String session_id,String chat_id){
-        if (sessionService.checkSession(session_id)){
-            String user_id=sessionService.getUserIdFromSession(session_id);
-            String checkUserExistsQuery="select * from master.dbo.joinedchat where chat_id=? and user_id = ?";
-            try{
-                Connection checkUserExistsConnection= dataSource.getConnection();
-                PreparedStatement preparedStatementCheckUserExists=checkUserExistsConnection.prepareStatement(checkUserExistsQuery);
-                preparedStatementCheckUserExists.setString(1,chat_id);
-                preparedStatementCheckUserExists.setString(2,user_id);
-                ResultSet resultSetCheckUserExists=preparedStatementCheckUserExists.executeQuery();
-                boolean result=resultSetCheckUserExists.next();
-                checkUserExistsConnection.close();
-                preparedStatementCheckUserExists.close();
-                resultSetCheckUserExists.close();
-                return result;
+    public boolean checkUserExistingInChatroom(String session_id, String chat_id) {
+        if (sessionService.checkSession(session_id)) {
+            String user_id = sessionService.getUserIdFromSession(session_id);
+            String checkUserExistsQuery = "SELECT * FROM master.dbo.joinedchat WHERE chat_id = ? AND user_id = ?";
+
+            try (Connection checkUserExistsConnection = dataSource.getConnection();
+                 PreparedStatement preparedStatementCheckUserExists = checkUserExistsConnection.prepareStatement(checkUserExistsQuery)) {
+                preparedStatementCheckUserExists.setString(1, chat_id);
+                preparedStatementCheckUserExists.setString(2, user_id);
+
+                try (ResultSet resultSetCheckUserExists = preparedStatementCheckUserExists.executeQuery()) {
+                    return resultSetCheckUserExists.next();
+                }
+
             } catch (SQLException e) {
-                throw new RuntimeException(e);
+                e.printStackTrace();
+                throw new RuntimeException("Error checking if user exists in chatroom: " + e.getMessage(), e);
             }
         }
         return false;
     }
+
     public boolean checkUserExistsInChatroom(String session_id,String user_id,String chat_id){
         if (sessionService.checkSession(session_id)){
             String checkUserExistsQuery="select * from master.dbo.joinedchat where chat_id=? and user_id = ?";
@@ -204,14 +220,14 @@ public class chatroomService {
         }
         return false;
     }
-    public void changeChatroomName(String session_id,String chat_id,String name){
+    public void changeChatroomName(String session_id,String chat_id,name name){
         if(sessionService.checkSession(session_id)){
-            if (checkUserExistsInChatroom(session_id,chat_id)){
+            if (checkUserExistingInChatroom(session_id,chat_id)){
                 String changeChatroomNameQuery="update master.dbo.chatroom set chat_name=? where chat_id=?";
                 try{
                     Connection changeChatroomNameConnection=dataSource.getConnection();
                     PreparedStatement changeChatroomNameStatement=changeChatroomNameConnection.prepareStatement(changeChatroomNameQuery);
-                    changeChatroomNameStatement.setString(1,name);
+                    changeChatroomNameStatement.setString(1,name.name);
                     changeChatroomNameStatement.setString(2,chat_id);
                     changeChatroomNameStatement.execute();
                     changeChatroomNameConnection.close();
@@ -224,7 +240,7 @@ public class chatroomService {
     }
     public void kickFromChatroom(String session_id,String chat_id,String kick_user_id){
         if(sessionService.checkSession(session_id)){
-            if(checkUserExistsInChatroom(session_id,chat_id)){
+            if(checkUserExistsInChatroom(session_id,chat_id,kick_user_id)){
                 String kickUserQuery="delete from master.dbo.joinedchat where user_id=? and chat_id=?";
                 try{
                     Connection kickUserConnection= dataSource.getConnection();
@@ -241,7 +257,7 @@ public class chatroomService {
         }
     }
     public List<userService.userPublic> listUsersInChatroom(String session_id,String chat_id){
-        List<userService.userPublic> list =new ArrayList<userService.userPublic>();
+        List<userService.userPublic> list =new ArrayList<>();
         if(sessionService.checkSession(session_id)){
             String listUsersInChatroomQuery="select user_id from master.dbo.joinedchat where chat_id=?";
             try{

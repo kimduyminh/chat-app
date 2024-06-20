@@ -66,7 +66,7 @@ public class messageService {
         Map<String, Object> response = new HashMap<>();
         System.out.println("calling listMessages");
         if (sessionService.checkSession(session_id)) {
-            if (chatRoomService.checkUserExistsInChatroom(session_id, chat_id)) {
+            if (chatRoomService.checkUserExistingInChatroom(session_id, chat_id)) {
                 List<message> listMessageData = new ArrayList<>();
                 String listMessageQuery = "select * from master.dbo.message where chat_id = ? ORDER BY [time]";
                 try (Connection listMessageConnection = dataSource.getConnection();

@@ -197,7 +197,7 @@ public class userService {
     public List<userPublic> findUser(String session_id,String info){
         if (sessionService.checkSession(session_id)){
             List<userPublic> findUserResult=new ArrayList<>();
-            String findUserQuery="select user_id,name from master.dbo.[user] where user_id=? or name=?";
+            String findUserQuery="select user_id,name from master.dbo.[user] where user_id like ? or name like ?";
             try{
                 Connection findUserConnection= dataSource.getConnection();
                 PreparedStatement findUserStatement=findUserConnection.prepareStatement(findUserQuery);
@@ -206,8 +206,8 @@ public class userService {
                 ResultSet findUserResultSet=findUserStatement.executeQuery();
                 if (findUserResultSet.next()){
                     userPublic userPublic=new userPublic();
-                    userPublic.name=findUserResultSet.getString("name");
-                    userPublic.user_id=findUserResultSet.getString("user_id");
+                    userPublic.name="%"+findUserResultSet.getString("name")+"%";
+                    userPublic.user_id="%"+findUserResultSet.getString("user_id")+"%";
                     findUserResult.add(userPublic);
                 }
                 findUserResultSet.close();
