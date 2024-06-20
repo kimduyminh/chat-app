@@ -914,3 +914,83 @@ body {
     }
 }
 /* end: Breakpoints */
+
+/* Chat Button CSS */
+body {
+    font-family: Arial, sans-serif;
+}
+
+.menu-btn-chat {
+    background-color: #f1f1f1;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    position: relative;
+}
+
+.menu-btn-chat .dot {
+    height: 5px;
+    width: 5px;
+    background-color: #333;
+    border-radius: 50%;
+    display: inline-block;
+    margin: 2px;
+}
+
+.popup-chat {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+    padding: 10px;
+    z-index: 1;
+}
+
+.popup-chat ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.popup-chat ul li {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.popup-chat ul li:hover {
+    background-color: #ddd;
+}
+
+.action-popup-chat {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    z-index: 2;
+}
+
+.action-popup-chat h3 {
+    margin-top: 0;
+}
+
+.action-popup-chat form {
+    display: flex;
+    flex-direction: column;
+}
+
+.action-popup-chat form input,
+.action-popup-chat form button {
+    margin: 5px 0;
+}
+
+.action-popup-chat form button {
+    align-self: flex-end;
+}
+
+button {
+    cursor: pointer;
+}

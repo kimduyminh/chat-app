@@ -243,6 +243,7 @@ function loadchat(session_id) {
                     //
                     const formDiv = createSubmitForm();
                     document.querySelector(".conversation").appendChild(formDiv);
+                    addChatOption()
                 });
 
                 messagesList.appendChild(listItem);
@@ -644,6 +645,218 @@ async function loadMessages(session_id, chat_id) {
         console.error('Error fetching messages:', error);
     }
 }
+
+// Chat option
+function addChatOption() {
+    const chatOption = document.getElementById('conversation-option');
+    chatOption.innerHTML = '';
+
+    let buttonHTML = `
+        <button class="menu-btn-chat" id="menuBtn-chat">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+        </button>
+
+        <div class="popup-chat" id="popup-chat">
+            <ul>
+                <li onclick="showChangeChatName()">Change Chat Name</li>
+                <li onclick="showKickFromChat()">Kick from Chat</li>
+                <li onclick="showDeleteChat()">Delete Chat</li>
+                <li onclick="showAddToChat()">Add to Chat</li>
+            </ul>
+        </div>
+
+        <!-- Popups for each action -->
+        <div class="action-popup-chat" id="changeChatNamePopup-chat">
+            <h3>Change Chat Name</h3>
+            <form id="changeChatNameForm-chat">
+                <input type="text" placeholder="New Chat Name">
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+
+        <div class="action-popup-chat" id="kickFromChatPopup-chat">
+            <h3>Kick User</h3>
+            <form id="kickFromChatForm-chat">
+                <!-- User list will be populated dynamically -->
+            </form>
+        </div>
+
+        <div class="action-popup-chat" id="deleteChatPopup-chat">
+            <h3>Are you sure?</h3>
+            <button onclick="deleteChat()">Yes</button>
+            <button onclick="closePopup('deleteChatPopup-chat')">No</button>
+        </div>
+
+        <div class="action-popup-chat" id="addToChatPopup-chat">
+            <h3>Add User</h3>
+            <form id="addToChatForm-chat">
+                <!-- User list will be populated dynamically -->
+            </form>
+        </div>
+    `;
+
+    chatOption.innerHTML = buttonHTML;
+
+    const menuBtn = document.getElementById('menuBtn-chat');
+    if (menuBtn) {
+        menuBtn.addEventListener('click', () => {
+            const popup = document.getElementById('popup-chat');
+            popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+        });
+    } else {
+        console.error('Element with ID "menuBtn-chat" not found.');
+    }
+
+    // Kick button assign
+    const kickForm = document.getElementById('kickFromChatForm-chat');
+    if (kickForm) {
+        kickForm.addEventListener('submit', handleKickFromChatSubmit);
+    }
+
+    // Ensure no form has an action attribute
+    document.querySelectorAll('form').forEach(form => {
+        form.removeAttribute('action');
+    });
+}
+
+// Button function
+
+function showChangeChatName() {
+    closeAllPopups();
+    document.getElementById('changeChatNamePopup-chat').style.display = 'block';
+}
+
+function showKickFromChat() {
+    closeAllPopups();
+    document.getElementById('kickFromChatPopup-chat').style.display = 'block';
+
+    // Dynamically fetch users
+    fetch(`/app/${session_id}/${chat_id_current}/listUser`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const users = data.map(user => ({
+                user_id: user.user_id,
+                name: user.name
+            }));
+
+            const form = document.getElementById('kickFromChatForm-chat');
+            form.innerHTML = users.map(user => `
+                <label>
+                    <input type="checkbox" name="users" value="${user.user_id}"> ${user.name}
+                </label>
+            `).join('');
+            form.innerHTML += '<button type="submit">Submit</button>';
+        })
+        .catch(error => {
+            console.error('Error fetching users:', error);
+        });
+}
+
+function handleKickFromChatSubmit(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const selectedUsers = formData.getAll('users');
+
+    const kickPromises = selectedUsers.map(user_id => {
+        return fetch(`/app/${session_id}/${chat_id_current}/${user_id}/kick`, {
+            method: 'GET'
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(`User ${user_id} kicked successfully`, data);
+            })
+            .catch(error => {
+                console.error(`Error kicking user ${user_id}:`, error);
+            });
+    });
+
+    Promise.all(kickPromises).then(() => {
+        closePopup('kickFromChatPopup-chat');
+        loadchat(session_id);
+    });
+}
+
+function showDeleteChat() {
+    closeAllPopups();
+    document.getElementById('deleteChatPopup-chat').style.display = 'block';
+}
+
+function deleteChat() {
+    fetch(`/app/${session_id}/${chat_id_current}/delete`, {
+        method: 'DELETE'
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Chat deleted successfully', data);
+            closePopup('deleteChatPopup-chat');
+            loadchat(session_id);
+        })
+        .catch(error => {
+            console.error('Error deleting chat:', error);
+        });
+}
+
+function showAddToChat() {
+    closeAllPopups();
+    document.getElementById('addToChatPopup-chat').style.display = 'block';
+
+    // Dynamically fetch users
+    fetch(`/app/${session_id}/${chat_id_current}/listNonMembers`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const users = data.map(user => ({
+                user_id: user.user_id,
+                name: user.name
+            }));
+
+            const form = document.getElementById('addToChatForm-chat');
+            form.innerHTML = users.map(user => `
+                <label>
+                    <input type="checkbox" name="users" value="${user.user_id}"> ${user.name}
+                </label>
+            `).join('');
+            form.innerHTML += '<button type="submit">Submit</button>';
+        })
+        .catch(error => {
+            console.error('Error fetching users:', error);
+        });
+}
+
+function closeAllPopups() {
+    document.querySelectorAll('.action-popup-chat').forEach(popup => {
+        popup.style.display = 'none';
+    });
+}
+
+function closePopup(id) {
+    document.getElementById(id).style.display = 'none';
+}
+
+
+
 
 // FRIEND PAGE
 document.addEventListener("DOMContentLoaded", function () {

@@ -48,6 +48,8 @@ public class userService {
         private String password;
     }
     @Component
+    @Getter
+    @Setter
     public static class userPublic{
         private String name;
         private String user_id;
@@ -170,6 +172,28 @@ public class userService {
             throw new RuntimeException(e);
         }
     }
+    public userPublic findUserInChat(String info){
+        userPublic userPublicInChat=new userPublic();
+        String findUserQuery="select user_id,name from master.dbo.[user] where user_id=? or name=?";
+        try{
+            Connection findUserConnection= dataSource.getConnection();
+            PreparedStatement findUserStatement=findUserConnection.prepareStatement(findUserQuery);
+            findUserStatement.setString(1,info);
+            findUserStatement.setString(2,info);
+            ResultSet findUserResultSet=findUserStatement.executeQuery();
+            if (findUserResultSet.next()){
+                userPublicInChat.name=findUserResultSet.getString("name");
+                userPublicInChat.user_id=findUserResultSet.getString("user_id");
+            }
+            findUserResultSet.close();
+            findUserStatement.close();
+            findUserConnection.close();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return userPublicInChat;
+    }
+
     public List<userPublic> findUser(String session_id,String info){
         if (sessionService.checkSession(session_id)){
             List<userPublic> findUserResult=new ArrayList<>();

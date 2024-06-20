@@ -1,6 +1,7 @@
 package com.project1.chatapp.chatroom;
 
 import com.project1.chatapp.sessions.sessionService;
+import com.project1.chatapp.user.userService;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +36,8 @@ public class chatroomService {
     }
     @Autowired
     private sessionService sessionService;
+    @Autowired
+    private userService userService;
     public chatroomService(@Qualifier("dataSource") DataSource dataSource) {
         this.dataSource = dataSource;
     }
@@ -235,6 +238,29 @@ public class chatroomService {
                     throw new RuntimeException(e);
                 }
             }
+        }
+    }
+    public List<userService.userPublic> listUsersInChatroom(String session_id,String chat_id){
+        List<userService.userPublic> list =new ArrayList<userService.userPublic>();
+        if(sessionService.checkSession(session_id)){
+            String listUsersInChatroomQuery="select user_id from master.dbo.joinedchat where chat_id=?";
+            try{
+                Connection listUsersInChatroomConnection = dataSource.getConnection();
+                PreparedStatement listUsersInChatroomStatement=listUsersInChatroomConnection.prepareStatement(listUsersInChatroomQuery);
+                listUsersInChatroomStatement.setString(1,chat_id);
+                ResultSet resultSetListUsersInChatroom=listUsersInChatroomStatement.executeQuery();
+                while (resultSetListUsersInChatroom.next()){
+                    String user_id=resultSetListUsersInChatroom.getString("user_id");
+                    com.project1.chatapp.user.userService.userPublic userPublic =userService.findUserInChat(user_id);
+                    list.add(userPublic);
+                }
+                return list;
+
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }else{
+            return list;
         }
     }
 }

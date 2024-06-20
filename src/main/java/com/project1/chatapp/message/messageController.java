@@ -45,15 +45,12 @@ public class messageController {
         private String timestamp;
     }
 
-    // Sử dụng @Payload thay vì @RequestBody và chỉ định kiểu của 'sessionInfo'
     @MessageMapping("/{session_id}/{chat_id}/sendm")
     @SendTo("/topic/{session_id}/{chat_id}")
     public message newMessage(@Payload sessionInfo sessionInfo) {
         System.out.println("message received");
-
-        // Tạo một đối tượng 'message' mới từ thông tin trong 'sessionInfo'
         message message = new message();
-        message.setUser_id(getUserIdFromSession(sessionInfo.getSession_id())); // Giả sử bạn có phương thức này
+        message.setUser_id(sessionService.getUserIdFromSession(sessionInfo.getSession_id())); // Giả sử bạn có phương thức này
         message.setChat_id(sessionInfo.getChat_id());
         message.setMessage(sessionInfo.getMessage());
         String formattedTimestamp = TimestampConverter.convertTimestamp(sessionInfo.getTimestamp()); // Huy Tran cook this
@@ -66,27 +63,6 @@ public class messageController {
         messageService.newMessage(message, sessionInfo.getSession_id(), sessionInfo.getChat_id());
 
         return message;
-    }
-
-    // force fix
-    public String getUserIdFromSession(String session_id){
-        String userId="";
-        String getUserIdFromSessionQuery="select user_id from master.dbo.sessions where session_id=?";
-        try {
-            Connection getUserIdFromSessionConnection=dataSource.getConnection();
-            PreparedStatement getUserIdFromSessionStatement=getUserIdFromSessionConnection.prepareStatement(getUserIdFromSessionQuery);
-            getUserIdFromSessionStatement.setString(1,session_id);
-            ResultSet getUserIdFromSessionResult=getUserIdFromSessionStatement.executeQuery();
-            if (getUserIdFromSessionResult.next()){
-                userId=getUserIdFromSessionResult.getString("user_id");
-            }
-            getUserIdFromSessionConnection.close();
-            getUserIdFromSessionStatement.close();
-            getUserIdFromSessionResult.close();
-            return userId;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public class TimestampConverter {

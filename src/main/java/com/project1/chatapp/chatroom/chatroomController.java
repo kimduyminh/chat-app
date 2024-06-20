@@ -2,6 +2,7 @@ package com.project1.chatapp.chatroom;
 
 import com.project1.chatapp.sessions.sessionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.project1.chatapp.user.userService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -43,10 +44,16 @@ public class chatroomController {
         chatroomService.changeChatroomName(session_id,chat_id,name);
         return "Chatroom name changed";
     }
-    @GetMapping("app/{session_id}/{chat_id}/kick")
-    public String kickFromChatroom(@PathVariable String session_id,@PathVariable String chat_id,@RequestBody String user_id) {
+    @GetMapping("/app/{session_id}/{chat_id}/{user_id}/kick")
+    public ResponseEntity<String> kickFromChatroom(@PathVariable String session_id,@PathVariable String chat_id,@PathVariable String user_id) {
+        System.out.println("Kick test");
+        System.out.println(user_id);
         chatroomService.kickFromChatroom(session_id,chat_id,user_id);
-        return "User kicked";
+        return ResponseEntity.ok("OK");
+    }
+    @GetMapping("/app/{session_id}/{chat_id}/listUser")
+    public List<userService.userPublic> listUser(@PathVariable String session_id,@PathVariable String chat_id) {
+        return chatroomService.listUsersInChatroom(session_id,chat_id);
     }
     
 }
