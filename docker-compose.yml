@@ -10,7 +10,7 @@ services:
       - 1433:1433
     volumes:
       - mssql:/data
-      - mssql:/dbinit.sql
+      - ./resources/dbinit.sql:/docker-entrypoint-initdb.d/init-db.sql
     restart: unless-stopped
 volumes:
   mssql:

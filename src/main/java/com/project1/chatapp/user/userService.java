@@ -194,36 +194,34 @@ public class userService {
         return userPublicInChat;
     }
 
-    public List<userPublic> findUser(String session_id,String info){
-        if (sessionService.checkSession(session_id)){
-            List<userPublic> findUserResult=new ArrayList<>();
-            String findUserQuery="select user_id,name from master.dbo.[user] where user_id like ? or name like ?";
-            try{
-                Connection findUserConnection= dataSource.getConnection();
-                PreparedStatement findUserStatement=findUserConnection.prepareStatement(findUserQuery);
-                findUserStatement.setString(1,info);
-                findUserStatement.setString(2,info);
-                ResultSet findUserResultSet=findUserStatement.executeQuery();
-                if (findUserResultSet.next()){
-                    userPublic userPublic=new userPublic();
-                    userPublic.name="%"+findUserResultSet.getString("name")+"%";
-                    userPublic.user_id="%"+findUserResultSet.getString("user_id")+"%";
-                    findUserResult.add(userPublic);
-                }
-                findUserResultSet.close();
-                findUserStatement.close();
-                findUserConnection.close();
-                if(findUserResult.isEmpty()){
-                    return null;
-                }else{
-                    return findUserResult;
+    public List<userPublic> findUser(String session_id, String info) {
+        if (sessionService.checkSession(session_id)) {
+            List<userPublic> findUserResult = new ArrayList<>();
+            String findUserQuery = "SELECT user_id, name FROM master.dbo.[user] WHERE user_id LIKE ? OR name LIKE ?";
+
+            try (Connection findUserConnection = dataSource.getConnection();
+                 PreparedStatement findUserStatement = findUserConnection.prepareStatement(findUserQuery)) {
+
+                String wildcardInfo = "%" + info + "%";
+                findUserStatement.setString(1, wildcardInfo);
+                findUserStatement.setString(2, wildcardInfo);
+                try (ResultSet findUserResultSet = findUserStatement.executeQuery()) {
+                    while (findUserResultSet.next()) {
+                        userPublic userPublic = new userPublic();
+                        userPublic.setName(findUserResultSet.getString("name"));
+                        userPublic.setUser_id(findUserResultSet.getString("user_id"));
+                        findUserResult.add(userPublic);
+                    }
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
+
+            return findUserResult.isEmpty() ? null : findUserResult;
         }
         return null;
     }
+
     /*
     public List<user> getListFriendOnline(){
 

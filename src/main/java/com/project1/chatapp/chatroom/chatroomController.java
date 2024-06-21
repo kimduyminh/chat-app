@@ -3,6 +3,7 @@ package com.project1.chatapp.chatroom;
 import com.project1.chatapp.sessions.sessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.project1.chatapp.user.userService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.project1.chatapp.message.messageService;
@@ -33,10 +34,15 @@ public class chatroomController {
         return ResponseEntity.ok("OK");
     }
     @GetMapping("/app/{session_id}/{chat_id}/{user_id}/add")
-    public String addToChatRoom(@PathVariable String session_id,@PathVariable String chat_id,@PathVariable String user_id) {
-        chatroomService.addToChatRoom(session_id,chat_id,user_id);
-        return "User added";
+    public ResponseEntity<String> addToChatRoom(@PathVariable String session_id, @PathVariable String chat_id, @PathVariable String user_id) {
+        try {
+            chatroomService.addToChatRoom(session_id, chat_id, user_id);
+            return ResponseEntity.ok("OK");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
     }
+
     @PostMapping("/app/{session_id}/{chat_id}/changename")
     public ResponseEntity<String> changeName(@PathVariable String session_id, @PathVariable String chat_id, @RequestBody chatroomService.name name) {
         chatroomService.changeChatroomName(session_id,chat_id,name);

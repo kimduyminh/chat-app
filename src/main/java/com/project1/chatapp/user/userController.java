@@ -23,7 +23,6 @@ public class userController {
     public List<userService.friend> getFriends(@PathVariable("session_id") String session_id){
         return userService.getListFriend(session_id);
     }
-    @GetMapping("/app/{session_id}/find")
     @PostMapping("/app/{session_id}/find")
     public List<userService.userPublic> findUser(@PathVariable("session_id") String session_id, @RequestBody Map<String, String> payload) {
         String info = payload.get("info");

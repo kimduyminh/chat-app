@@ -1,5 +1,8 @@
 package com.project1.chatapp.message;
 
+import com.project1.chatapp.config.timeStampConverter;
+import com.project1.chatapp.sessions.sessionService;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,30 +13,21 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.messaging.simp.annotation.SubscribeMapping;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import com.project1.chatapp.sessions.sessionService;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.sql.DataSource;
 import java.sql.*;
-import java.util.List;
 import java.util.Map;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 @RestController
 public class messageController {
     @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+    @Autowired
     private messageService messageService;
     @Autowired
     private sessionService sessionService;
-    @Autowired
-    private DataSource dataSource;
 
     @Getter
     @Setter
@@ -44,39 +38,27 @@ public class messageController {
         private String message;
         private String timestamp;
     }
+    @Autowired
+    private timeStampConverter timeStampConverter;
 
     @MessageMapping("/{session_id}/{chat_id}/sendm")
     @SendTo("/topic/{session_id}/{chat_id}")
-    public message newMessage(@Payload sessionInfo sessionInfo) {
-        System.out.println("message received");
-        message message = new message();
-        message.setUser_id(sessionService.getUserIdFromSession(sessionInfo.getSession_id())); // Giả sử bạn có phương thức này
-        message.setChat_id(sessionInfo.getChat_id());
-        message.setMessage(sessionInfo.getMessage());
-        String formattedTimestamp = TimestampConverter.convertTimestamp(sessionInfo.getTimestamp()); // Huy Tran cook this
-        message.setTime(Timestamp.valueOf(formattedTimestamp)); // Chuyển đổi String thành Timestamp
+    public void newMessage(@Payload sessionInfo sessionInfo, @DestinationVariable String chat_id, @DestinationVariable String session_id) {
+        if (sessionService.checkSession(session_id)){
+            messagingTemplate.convertAndSend("/topic/" + chat_id, sessionInfo.getMessage());
 
-        System.out.println(message.getUser_id());
-        System.out.println(message.getChat_id());
+            message newMessage = new message();
+            newMessage.setUser_id(sessionService.getUserIdFromSession(sessionInfo.getSession_id()));
+            newMessage.setChat_id(sessionInfo.getChat_id());
+            newMessage.setMessage(sessionInfo.getMessage());
 
-        // Gọi service với đối tượng 'message' mới tạo
-        messageService.newMessage(message, sessionInfo.getSession_id(), sessionInfo.getChat_id());
+            String formattedTimestamp = timeStampConverter.convertTimestamp(sessionInfo.getTimestamp());
+            newMessage.setTime(Timestamp.valueOf(formattedTimestamp));
 
-        return message;
-    }
-
-    public class TimestampConverter {
-        private static final SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-        private static final SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-
-        public static String convertTimestamp(String inputTimestamp) {
-            try {
-                Date parsedDate = inputFormat.parse(inputTimestamp);
-                return outputFormat.format(parsedDate);
-            } catch (ParseException e) {
-                e.printStackTrace();
-                return null;
-            }
+            messageService.newMessage(newMessage, sessionInfo.getSession_id(), sessionInfo.getChat_id());
+        }
+        else{
+            System.out.println("Intruder detected");
         }
     }
 

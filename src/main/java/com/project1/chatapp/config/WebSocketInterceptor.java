@@ -10,7 +10,7 @@ import org.springframework.web.socket.WebSocketHandler;
 
 import java.util.Map;
 @Component
-public class webSocketInterceptor {
+public class WebSocketInterceptor {
     @Autowired
     private sessionService session;
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {

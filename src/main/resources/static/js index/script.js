@@ -13,18 +13,9 @@ let inputData="";
 let newlyCreatedChatId="";
 
 // GET SESSION ID
-connectWebSocket()
-function getSessionIdFromQuery() {
-    var url = window.location.href;
-    var queryString = url.split('?')[1];
-    var queryParams = queryString.split('&');
-    for (var i = 0; i < queryParams.length; i++) {
-        var pair = queryParams[i].split('=');
-        if (pair[0] === 'id') {
-            return pair[1];
-        }
-    }
-    return null;
+function getSessionID() {
+    const queryParams = new URLSearchParams(window.location.search);
+    return queryParams.get('id');
 }
 
 //SETTING UP FOR ELEMENT TO LOAD PAGE INCLUDING SESSION ID
@@ -34,19 +25,20 @@ contactsLink.href = `friendlist.html?id=${session_id}`;
 
 //INITIALIZE WEBSOCKET
 
-function connectWebSocket() {// Retrieve session ID from local storage
+connectWebSocket()
+function connectWebSocket() {
 
     if (!session_id) {
         console.error('Session ID is not available.');
         return;
     }
 
-    const wsUrl = '/ws'; // Adjust the URL according to your server configuration
+    const wsUrl = '/ws';
 
     client = new StompJs.Client({
         brokerURL: wsUrl,
         connectHeaders: {
-            'session-id': session_id, // Use session ID in connection headers
+            'session-id': session_id,
         },
         debug: function (str) {
             console.log('[DEBUG]', str);
@@ -222,25 +214,6 @@ function loadchat(session_id) {
                     const conversationList = document.querySelector(".conversation-list");
                     conversationList.innerHTML = '';
                     loadMessages(session_id,chat_id_current)
-
-                    // if (conversationId) {
-                    //     fetch(`/app/${session_id}/${conversationId}/loadm`)
-                    //         .then(response => response.json())
-                    //         .then(messages => {
-                    //             if (Array.isArray(messages)) {
-                    //                 messages.forEach(message => {
-                    //                     const conversationItem = createConversationItem(message);
-                    //                     conversationList.appendChild(conversationItem);
-                    //                 });
-                    //             } else {
-                    //                 console.log('No messages to display');
-                    //             }
-                    //         })
-                    //         .catch(error => console.error('Error:', error));
-                    // } else {
-                    //     console.error('Conversation ID is undefined');
-                    // }
-                    //
                     const formDiv = createSubmitForm();
                     document.querySelector(".conversation").appendChild(formDiv);
                     addChatOption()
@@ -259,14 +232,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 function createConversationUser(name) {
-    // const
-    // userDiv.innerHTML = `
-    //     <div>
-    //         <div class="conversation-user-name">${name}</div>
-    //     </div>
-    // `;
-    // return userDiv;
-
     const userDiv = document.getElementsByClassName('conversation-user')[0];
     if (userDiv) {
         userDiv.innerHTML = ''; // Clear existing content
@@ -280,37 +245,6 @@ function createConversationUser(name) {
     return userDiv;
 }
 
-// function createConversationItem(message) {
-//     const itemLi = document.createElement("li");
-//     const isMe = message.sentBySession;
-//     itemLi.classList.add("conversation-item", isMe ? "me" : "");
-//
-//     const formattedTime = new Date(message.time).toLocaleString();
-//     itemLi.innerHTML = `
-//         <div class="conversation-item-side">
-//             <img class="conversation-item-image" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8cGVvcGxlfGVufDB8fDB8fHww&auto=format&fit=crop&w=500&q=60" alt="">
-//         </div>
-//         <div class="conversation-item-content">
-//             <div class="conversation-item-wrapper">
-//                 <div class="conversation-item-box">
-//                     <div class="conversation-item-text">
-//                         <p>${escapeHtml(message.message)}</p>
-//                         <div class="conversation-item-time">${formattedTime}</div>
-//                     </div>
-//                     <div class="conversation-item-dropdown">
-//                         <button type="button" class="conversation-item-dropdown-toggle"><i class="ri-more-2-line"></i></button>
-//                         <ul class="conversation-item-dropdown-list">
-//                             <li><a href="#"><i class="ri-share-forward-line"></i> Forward</a></li>
-//                             <li><a href="#"><i class="ri-delete-bin-line"></i> Delete</a></li>
-//                         </ul>
-//                     </div>
-//                 </div>
-//             </div>
-//         </div>
-//     `;
-//     return itemLi;
-// }
-
 function escapeHtml(unsafe) {
     return unsafe
         .replace(/&/g, "&amp;")
@@ -321,20 +255,6 @@ function escapeHtml(unsafe) {
 }
 
 function createSubmitForm() {
-    // const conversationDiv = document.createElement("div");
-    // conversationDiv.classList.add("conversation-form");
-    // conversationDiv.innerHTML = '';
-    // conversationDiv.innerHTML = `
-    //     <button type="button" class="conversation-form-button"><i class="ri-emotion-line"></i></button>
-    //     <div class="conversation-form-group">
-    //         <textarea class="conversation-form-input" rows="1" placeholder="Type here..."></textarea>
-    //         <button type="button" class="conversation-form-record"><i class="ri-mic-line"></i></button>
-    //     </div>
-    //     <button type="button" id="submitButton" class="conversation-form-button conversation-form-submit"><i class="ri-send-plane-2-line"></i></button>
-    // `;
-
-    // const converDiv = document.getElementById('delete-temp')[0];
-    // converDiv.innerHTML = '';
     const conversationDiv = document.getElementsByClassName('conversation-form')[0];
     conversationDiv.innerHTML = '';
     const conversationHTML = `
@@ -354,10 +274,7 @@ function createSubmitForm() {
         console.log(inputData);
         console.log(chat_id_current)
         sendMessage(session_id, chat_id_current, inputData, new Date());
-
         loadMessages(session_id, chat_id_current);
-
-
     });
 
     return conversationDiv;
@@ -365,8 +282,11 @@ function createSubmitForm() {
 
 // WS MESSAGE FUNCTION
 
-function newSubscription(chat_id){
-    client.subscribe(`/topic/${session_id}/${chat_id}`);
+function newSubscription(chat_id) {
+    console.log("subcribed to chat")
+    client.subscribe(`/topic/${chat_id}`, function (message) {
+        loadMessages(session_id, chat_id); // Handle incoming messages
+    });
 }
 function sendMessage(session_id, chat_id, message, timestamp) {
     client.publish({
@@ -472,58 +392,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
         };
         selectedItems.appendChild(li);
     }
-
-    // createGroupBtn.onclick = function() {
-    //     const groupName = groupNameInput.value;
-    //     const newGroup = {
-    //         name: groupName,
-    //         session_id: session_id
-    //     }
-    //
-    //     fetch(`/app/${session_id}/createChatroom`, {
-    //         method: 'POST',
-    //         headers: {
-    //             'Content-Type': 'application/json'
-    //         },
-    //         body: JSON.stringify(newGroup)
-    //     })
-    //         .then(response => {
-    //             if (response.ok) {
-    //                 loadchat(session_id);
-    //                 return response.text();
-    //             } else {
-    //                 throw new Error('Failed to create chatroom');
-    //             }
-    //         })
-    //         .then(chatId => {
-    //             alert(`Nhóm đã tạo với tên: ${groupName} và các thành viên: ${selectedUserIds.join(", ")}`);
-    //             popup.style.display = "none";
-    //             selectedItems.innerHTML = "";
-    //             groupNameInput.value = "";
-    //
-    //             selectedUserIds.forEach(userId => {
-    //                 fetch(`/app/${session_id}/${chatId}/${userId}/add`, {
-    //                     method: 'GET'
-    //                 })
-    //                     .then(response => {
-    //                         if (response.ok) {
-    //                             console.log(`User ${userId} added to chat ${chatId}`);
-    //                         } else {
-    //                             throw new Error(`Failed to add user ${userId} to chat ${chatId}`);
-    //                         }
-    //                     })
-    //                     .catch(error => {
-    //                         console.error('Error:', error);
-    //                     });
-    //             });
-    //
-    //             selectedUserIds = [];
-    //         })
-    //         .catch(error => {
-    //             console.error('Error:', error);
-    //             alert("Failed to create chatroom");
-    //         });
-    // }
     if (!createGroupBtn._listenerAttached) {
         createGroupBtn.onclick = function() {
             console.log("Button clicked");
@@ -583,12 +451,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
 });
 
-// Huy Tran's work
-function getSessionID() {
-    const queryParams = new URLSearchParams(window.location.search);
-    return queryParams.get('id');
-}
-
 async function loadMessages(session_id, chat_id) {
     console.log('fetching data ' + session_id + ' ' + chat_id);
     try {
@@ -647,6 +509,14 @@ async function loadMessages(session_id, chat_id) {
     }
 }
 
+
+
+
+
+
+
+
+
 // Chat option
 document.addEventListener('DOMContentLoaded', () => {
     addChatOption();
@@ -656,7 +526,7 @@ function addChatOption() {
     const chatOption = document.getElementById('conversation-option');
     chatOption.innerHTML = '';
 
-    let buttonHTML = `
+    const buttonHTML = `
         <button class="menu-btn-chat" id="menuBtn-chat">
             <span class="dot"></span>
             <span class="dot"></span>
@@ -683,8 +553,7 @@ function addChatOption() {
 
         <div class="action-popup-chat" id="kickFromChatPopup-chat">
             <h3>User in chat:</h3>
-            <form id="kickFromChatForm-chat">
-            </form>
+            <form id="kickFromChatForm-chat"></form>
             <h3>Select user to kick</h3>
         </div>
 
@@ -793,7 +662,7 @@ function handleChangeChatNameSubmit(event) {
         if (response.ok) {
             console.log("Chat name changed successfully");
             loadchat(session_id);
-            loadMessages(session_id,chat_id_current);
+            loadMessages(session_id, chat_id_current);
         } else {
             console.error("Failed to change chat name");
         }
@@ -801,7 +670,6 @@ function handleChangeChatNameSubmit(event) {
         console.error("Error changing chat name:", error);
     });
     closePopup('changeChatNamePopup-chat');
-
 }
 
 function showKickFromChat() {
@@ -878,8 +746,8 @@ function deleteChat() {
             if (response.ok) {
                 closePopup('deleteChatPopup-chat');
                 loadchat(session_id);
-            }else{
-                console.log("error 835")
+            } else {
+                console.error('Error deleting chat');
             }
         })
         .then(data => {
@@ -892,15 +760,33 @@ function deleteChat() {
         });
 }
 
+let typingTimeout;
+const typingDelay = 300; // Delay in milliseconds
+
 function showAddToChat() {
     closeAllPopups();
     document.getElementById('addToChatPopup-chat').style.display = 'block';
 
-    // Dynamically fetch users
-    fetch(`/app/${session_id}/${chat_id_current}/listNonMembers`)
+    const inputField = document.getElementById('searchUserInput');
+    inputField.addEventListener('input', () => {
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+            fetchUsers(inputField.value);
+        }, typingDelay);
+    });
+}
+
+function fetchUsers(query) {
+    fetch(`/app/${session_id}/find`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ info: query }),
+    })
         .then(response => {
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                console.log(`Cannot find the user`);
             }
             return response.json();
         })
@@ -910,13 +796,13 @@ function showAddToChat() {
                 name: user.name
             }));
 
-            const form = document.getElementById('addToChatForm-chat');
-            form.innerHTML = users.map(user => `
-                <label>
-                    <input type="checkbox" name="users" value="${user.user_id}"> ${user.name}
-                </label>
+            const searchResults = document.getElementById('searchResults');
+            searchResults.innerHTML = users.map(user => `
+                <div>
+                    ${user.name}
+                    <button onclick="addUserToChat('${user.user_id}')">Add</button>
+                </div>
             `).join('');
-            form.innerHTML += '<button type="submit">Submit</button>';
         })
         .catch(error => {
             console.error('Error fetching users:', error);
@@ -932,6 +818,7 @@ function closeAllPopups() {
 function closePopup(id) {
     document.getElementById(id).style.display = 'none';
 }
+
 
 
 
