@@ -1,5 +1,6 @@
 package com.project1.chatapp.message;
 
+import com.project1.chatapp.chatroom.chatroomService;
 import com.project1.chatapp.config.timeStampConverter;
 import com.project1.chatapp.sessions.sessionService;
 
@@ -28,6 +29,8 @@ public class messageController {
     private messageService messageService;
     @Autowired
     private sessionService sessionService;
+    @Autowired
+    private chatroomService chatRoomService;
 
     @Getter
     @Setter
@@ -44,7 +47,7 @@ public class messageController {
     @MessageMapping("/{session_id}/{chat_id}/sendm")
     @SendTo("/topic/{session_id}/{chat_id}")
     public void newMessage(@Payload sessionInfo sessionInfo, @DestinationVariable String chat_id, @DestinationVariable String session_id) {
-        if (sessionService.checkSession(session_id)){
+        if (chatRoomService.checkUserExistingInChatroom(session_id,chat_id)){
             messagingTemplate.convertAndSend("/topic/" + chat_id, sessionInfo.getMessage());
 
             message newMessage = new message();
