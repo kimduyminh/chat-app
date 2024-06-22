@@ -1,4 +1,4 @@
-package com.project1.chatapp.config;
+package com.project1.chatapp.config.webSocketConfig;
 
 
 import com.project1.chatapp.sessions.sessionService;
