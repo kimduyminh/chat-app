@@ -35,6 +35,8 @@ public class userService {
         private String password;
     }
     @Component
+    @Getter
+    @Setter
     public static class friend {
         private String username;
         private String user_id;
@@ -55,10 +57,18 @@ public class userService {
         private String user_id;
     }
     @Component
-    public static class friendRequest {
-       private String user_id1;
+    @Getter
+    @Setter
+    public static class friendRequestSent {
        private String user_id2;
        private int status_id;
+    }
+    @Component
+    @Getter
+    @Setter
+    public static class friendRequestReceived {
+        private String user_id1;
+        private int status_id;
     }
     public String tempSession;
     public ResponseEntity<String> login(@RequestBody loginInfo loginInfo) {
@@ -196,28 +206,30 @@ public class userService {
 
     public List<userPublic> findUser(String session_id, String info) {
         if (sessionService.checkSession(session_id)) {
-            List<userPublic> findUserResult = new ArrayList<>();
-            String findUserQuery = "SELECT user_id, name FROM master.dbo.[user] WHERE user_id LIKE ? OR name LIKE ?";
+            if(info!=sessionService.getUserIdFromSession(session_id)&&info!=getUserNameFromSession(session_id)){
+                List<userPublic> findUserResult = new ArrayList<>();
+                String findUserQuery = "SELECT user_id, name FROM master.dbo.[user] WHERE user_id LIKE ? OR name LIKE ?";
 
-            try (Connection findUserConnection = dataSource.getConnection();
-                 PreparedStatement findUserStatement = findUserConnection.prepareStatement(findUserQuery)) {
+                try (Connection findUserConnection = dataSource.getConnection();
+                     PreparedStatement findUserStatement = findUserConnection.prepareStatement(findUserQuery)) {
 
-                String wildcardInfo = "%" + info + "%";
-                findUserStatement.setString(1, wildcardInfo);
-                findUserStatement.setString(2, wildcardInfo);
-                try (ResultSet findUserResultSet = findUserStatement.executeQuery()) {
-                    while (findUserResultSet.next()) {
-                        userPublic userPublic = new userPublic();
-                        userPublic.setName(findUserResultSet.getString("name"));
-                        userPublic.setUser_id(findUserResultSet.getString("user_id"));
-                        findUserResult.add(userPublic);
+                    String wildcardInfo = "%" + info + "%";
+                    findUserStatement.setString(1, wildcardInfo);
+                    findUserStatement.setString(2, wildcardInfo);
+                    try (ResultSet findUserResultSet = findUserStatement.executeQuery()) {
+                        while (findUserResultSet.next()) {
+                            userPublic userPublic = new userPublic();
+                            userPublic.setName(findUserResultSet.getString("name"));
+                            userPublic.setUser_id(findUserResultSet.getString("user_id"));
+                            findUserResult.add(userPublic);
+                        }
                     }
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
 
             return findUserResult.isEmpty() ? null : findUserResult;
+            }
         }
         return null;
     }
@@ -226,33 +238,31 @@ public class userService {
     public List<user> getListFriendOnline(){
 
     }*/
+
+
     //Friendship Service
     public List<friend> getListFriend(String session_id) {
-        if(sessionService.checkSession(session_id)){
+        if (sessionService.checkSession(session_id)) {
             String user_id = sessionService.getUserIdFromSession(session_id);
-            String getListFriendQuery = "SELECT * FROM master.dbo.friendship where user_id1 =? and status_id=1 or user_id2 =? and status_id=1";
+            String getListFriendQuery = "SELECT * FROM master.dbo.friendship WHERE (user_id1 = ? OR user_id2 = ?) AND status_id = 1";
             List<String> friend_id = new ArrayList<>();
             List<friend> friends = new ArrayList<>();
-            try {
-                Connection getListFriendConnection = dataSource.getConnection();
-                PreparedStatement getListFriendQ = getListFriendConnection.prepareStatement(getListFriendQuery);
+            try (Connection getListFriendConnection = dataSource.getConnection();
+                 PreparedStatement getListFriendQ = getListFriendConnection.prepareStatement(getListFriendQuery)) {
                 getListFriendQ.setString(1, user_id);
                 getListFriendQ.setString(2, user_id);
-                ResultSet getListFriendResult = getListFriendQ.executeQuery();
-                if (getListFriendResult.next()) {
-                    if (getListFriendResult.getString("user_id1").equals(user_id)) {
-                        friend_id.add(getListFriendResult.getString("user_id2"));
-                    }
-                    if (getListFriendResult.getString("user_id2").equals(user_id)) {
-                        friend_id.add(getListFriendResult.getString("user_id1"));
+                try (ResultSet getListFriendResult = getListFriendQ.executeQuery()) {
+                    while (getListFriendResult.next()) {
+                        if (getListFriendResult.getString("user_id1").equals(user_id)) {
+                            friend_id.add(getListFriendResult.getString("user_id2"));
+                        } else if (getListFriendResult.getString("user_id2").equals(user_id)) {
+                            friend_id.add(getListFriendResult.getString("user_id1"));
+                        }
                     }
                 }
-                getListFriendResult.close();
-                getListFriendQ.close();
-                getListFriendConnection.close();
                 for (String i : friend_id) {
                     friend friend = new friend();
-                    friend.username=getUserNameFromId(i);
+                    friend.username = getUserNameFromId(i);
                     friend.user_id = i;
                     friends.add(friend);
                 }
@@ -260,39 +270,43 @@ public class userService {
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
-        }else {return null;
+        } else {
+            return null;
         }
     }
-    public void sendFriendRequest(String session_id, userPublic userPublic) {
-        if(sessionService.checkSession(session_id)){
-            String user_id=sessionService.getUserIdFromSession(session_id);
-            String deletePreviousRequestQuery = "DELETE FROM master.dbo.friendship WHERE ((user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)) AND status_id IN (0, 2)";
-            String sendFriendRequestQuery="insert into friendship(user_id1,user_id2,status_id) values(?,?,0)";
-            try{
-                Connection deletePreviousRequestConnection=dataSource.getConnection();
-                PreparedStatement deletePreviousRequestStatement=deletePreviousRequestConnection.prepareStatement(deletePreviousRequestQuery);
-                deletePreviousRequestStatement.setString(1,user_id);
-                deletePreviousRequestStatement.setString(2,userPublic.user_id);
-                deletePreviousRequestStatement.setString(3,userPublic.user_id);
-                deletePreviousRequestStatement.setString(4,user_id);
-                deletePreviousRequestStatement.close();
-                deletePreviousRequestConnection.close();
+    public void sendFriendRequest(String session_id, String user_id_new) {
+        if (sessionService.checkSession(session_id)) {
+            String user_id = sessionService.getUserIdFromSession(session_id);
+            String deletePreviousRequestQuery = "DELETE FROM master.dbo.friendship WHERE " +
+                    "((user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)) AND status_id IN (0, 2)";
+            String sendFriendRequestQuery = "INSERT INTO friendship (user_id1, user_id2, status_id) VALUES (?, ?, 0)";
 
-                Connection sendFriendRequestConnection= dataSource.getConnection();
-                PreparedStatement sendFriendRequestStatement=sendFriendRequestConnection.prepareStatement(sendFriendRequestQuery);
-                sendFriendRequestStatement.setString(1,user_id);
-                sendFriendRequestStatement.setString(2,userPublic.user_id);
-                sendFriendRequestStatement.close();
-                sendFriendRequestConnection.close();
+            try (Connection connection = dataSource.getConnection()) {
+                try (PreparedStatement deletePreviousRequestStatement = connection.prepareStatement(deletePreviousRequestQuery)) {
+                    deletePreviousRequestStatement.setString(1, user_id);
+                    deletePreviousRequestStatement.setString(2, user_id_new);
+                    deletePreviousRequestStatement.setString(3, user_id_new);
+                    deletePreviousRequestStatement.setString(4, user_id);
+                    deletePreviousRequestStatement.executeUpdate();
+                }
+
+                try (PreparedStatement sendFriendRequestStatement = connection.prepareStatement(sendFriendRequestQuery)) {
+                    sendFriendRequestStatement.setString(1, user_id);
+                    sendFriendRequestStatement.setString(2, user_id_new);
+                    sendFriendRequestStatement.executeUpdate();
+                }
             } catch (SQLException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("Error processing friend request", e);
             }
+        } else {
+            throw new RuntimeException("Invalid session");
         }
     }
-    public List<friendRequest> loadFriendRequestSent(String session_id){
+
+    public List<friendRequestSent> loadFriendRequestSent(String session_id){
         if(sessionService.checkSession(session_id)){
             String user_id=sessionService.getUserIdFromSession(session_id);
-            List<friendRequest> friendRequestSentList = new ArrayList<>();
+            List<friendRequestSent> friendRequestSentList = new ArrayList<>();
             String loadFriendRequestSentQuery="select * from master.dbo.friendship where user_id1 = ?AND status_id IN (0, 2)";
             try{
                 Connection loadFriendRequestSentConnection= dataSource.getConnection();
@@ -300,8 +314,7 @@ public class userService {
                 loadFriendRequestSentStatement.setString(1,user_id);
                 ResultSet loadFriendRequestSentResultSet=loadFriendRequestSentStatement.executeQuery();
                 if(loadFriendRequestSentResultSet.next()){
-                    friendRequest friendRequest=new friendRequest();
-                    friendRequest.user_id1=user_id;
+                    friendRequestSent friendRequest=new friendRequestSent();
                     friendRequest.user_id2=loadFriendRequestSentResultSet.getString("user_id2");
                     friendRequest.status_id=loadFriendRequestSentResultSet.getInt("status_id");
                     friendRequestSentList.add(friendRequest);
@@ -317,32 +330,75 @@ public class userService {
             return null;
         }
     }
-    public List<friendRequest> loadFriendRequestReceived(String session_id){
-        if(sessionService.checkSession(session_id)){
-            String user_id=sessionService.getUserIdFromSession(session_id);
-            List<friendRequest> friendRequestReceivedList = new ArrayList<>();
-            String loadFriendRequestReceivedQuery="select * from master.dbo.friendship where user_id2 = ?AND status_id IN (0, 2)";
-            try{
-                Connection loadFriendRequestReceivedConnection= dataSource.getConnection();
-                PreparedStatement loadFriendRequestReceivedStatement=loadFriendRequestReceivedConnection.prepareStatement(loadFriendRequestReceivedQuery);
-                loadFriendRequestReceivedStatement.setString(1,user_id);
-                ResultSet loadFriendRequestReceivedResultSet=loadFriendRequestReceivedStatement.executeQuery();
-                if(loadFriendRequestReceivedResultSet.next()){
-                    friendRequest friendRequest=new friendRequest();
-                    friendRequest.user_id1=user_id;
-                    friendRequest.user_id2=loadFriendRequestReceivedResultSet.getString("user_id2");
-                    friendRequest.status_id=loadFriendRequestReceivedResultSet.getInt("status_id");
-                    friendRequestReceivedList.add(friendRequest);
+    public List<friendRequestReceived> loadFriendRequestReceived(String session_id) {
+        if (sessionService.checkSession(session_id)) {
+            String user_id = sessionService.getUserIdFromSession(session_id);
+            List<friendRequestReceived> friendRequestReceivedList = new ArrayList<>();
+            String loadFriendRequestReceivedQuery = "select * from master.dbo.friendship where user_id2 = ? AND status_id IN (0, 2)";
+
+            try (Connection loadFriendRequestReceivedConnection = dataSource.getConnection();
+                 PreparedStatement loadFriendRequestReceivedStatement = loadFriendRequestReceivedConnection.prepareStatement(loadFriendRequestReceivedQuery)) {
+
+                loadFriendRequestReceivedStatement.setString(1, user_id);
+                try (ResultSet loadFriendRequestReceivedResultSet = loadFriendRequestReceivedStatement.executeQuery()) {
+                    while (loadFriendRequestReceivedResultSet.next()) {
+                        friendRequestReceived friendRequest = new friendRequestReceived();
+                        friendRequest.user_id1 = loadFriendRequestReceivedResultSet.getString("user_id1");
+                        friendRequest.status_id = loadFriendRequestReceivedResultSet.getInt("status_id");
+                        friendRequestReceivedList.add(friendRequest);
+                    }
                 }
-                loadFriendRequestReceivedResultSet.close();
-                loadFriendRequestReceivedConnection.close();
-                loadFriendRequestReceivedStatement.close();
-                return  friendRequestReceivedList;
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
-        }else {
-            return null;
+
+            return friendRequestReceivedList;
+        } else {
+            return new ArrayList<>();
+        }
+    }
+    public void acceptFriendRequest(String session_id, String user_id_new) {
+        if (sessionService.checkSession(session_id)) {
+            String user_id = sessionService.getUserIdFromSession(session_id);
+            String acceptFriendRequestQuery = "UPDATE friendship SET status_id = 1 " +
+                    "WHERE (user_id1 = ? AND user_id2 = ?) OR " +
+                    "(user_id1 = ? AND user_id2 = ?)";
+
+            try (Connection connection = dataSource.getConnection();
+                 PreparedStatement statement = connection.prepareStatement(acceptFriendRequestQuery)) {
+
+                statement.setString(1, user_id);
+                statement.setString(2, user_id_new);
+                statement.setString(3, user_id_new);
+                statement.setString(4, user_id);
+
+                statement.executeUpdate();
+
+                } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+    public void refuseFriendRequest(String session_id, String user_id_new) {
+        if (sessionService.checkSession(session_id)) {
+            String user_id = sessionService.getUserIdFromSession(session_id);
+            String acceptFriendRequestQuery = "UPDATE friendship SET status_id = 2 " +
+                    "WHERE (user_id1 = ? AND user_id2 = ?) OR " +
+                    "(user_id1 = ? AND user_id2 = ?)";
+
+            try (Connection connection = dataSource.getConnection();
+                 PreparedStatement statement = connection.prepareStatement(acceptFriendRequestQuery)) {
+
+                statement.setString(1, user_id);
+                statement.setString(2, user_id_new);
+                statement.setString(3, user_id_new);
+                statement.setString(4, user_id);
+
+                statement.executeUpdate();
+
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }

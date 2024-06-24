@@ -44,8 +44,8 @@ function connectWebSocket() {
             console.log('[DEBUG]', str);
         },
         reconnectDelay: 5000,
-        heartbeatIncoming: 400,
-        heartbeatOutgoing: 400,
+        heartbeatIncoming: 4000,
+        heartbeatOutgoing: 4000,
     });
 
     client.onConnect = function (frame) {
@@ -275,6 +275,7 @@ function createSubmitForm() {
         console.log(chat_id_current)
         sendMessage(session_id, chat_id_current, inputData, new Date());
         loadMessages(session_id, chat_id_current);
+        inputData.value="";
     });
 
     return conversationDiv;
@@ -830,105 +831,231 @@ document.addEventListener("DOMContentLoaded", function () {
     const friendRequestsList = document.getElementById("friendRequestsList");
     const searchFriendInput = document.getElementById("searchFriendInput");
     const addFriendBtn = document.getElementById("addFriendBtn");
+    const searchResultsPopup = document.createElement("div");
 
-    // var chatLink = document.getElementById("chat-link");
-    // var contactsLink = document.getElementById("contacts-link");
-    // chatLink.href = `mainchat.html?id=${session_id}`;
-    // contactsLink.href = `friendlist.html?id=${session_id}`;
-    // Dummy data
-    let friends = ["Alice", "Bob", "Charlie"];
-    let friendRequests = ["David", "Eve"];
-    let allUsers = ["Alice", "Bob", "Charlie", "David", "Eve", "Tuan Minh", "Kim Minh", "Quan Ngoo", "Huy Tran"];
+    // Styling for the popup
+    searchResultsPopup.style.position = "absolute";
+    searchResultsPopup.style.backgroundColor = "white";
+    searchResultsPopup.style.border = "1px solid #ccc";
+    searchResultsPopup.style.zIndex = "1000";
+    searchResultsPopup.style.display = "none";
+    searchResultsPopup.style.maxHeight = "200px";
+    searchResultsPopup.style.overflowY = "auto";
 
-    // Function to list friends
-    function listFriends() {
+    document.body.appendChild(searchResultsPopup);
+
+    let friends = [];
+
+    // Load user info
+    function loadInfo(info) {
+        return fetch(`/app/${session_id}/find`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ info: info })
+        }).then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Failed to load info');
+            }
+        });
+    }
+    //Friends already added:
+    // Fetch friends from the server
+    function fetchFriends() {
+        fetch(`/app/friend/${session_id}/listfriend`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch friends');
+                }
+                return response.json();
+            })
+            .then(data => {
+                friends = data.map(friend => friend);
+                console.log("Fetched friends:", friends); // Debug log
+                displayFriends();
+            })
+            .catch(error => {
+                console.error("Error fetching friends:", error);
+                // Handle error: display a message to the ser or retry logic
+            });
+    }
+
+    // Display friends in the UI
+    function displayFriends() {
         friendList.innerHTML = "";
         friends.forEach(friend => {
             const li = document.createElement("li");
-            li.textContent = friend;
+            li.textContent = friend.username;
             friendList.appendChild(li);
         });
     }
 
-    // Function to send friend request
-    function sendFriendRequest(friendName) {
-        if (!friends.includes(friendName) && !friendRequests.includes(friendName)) {
-            friendRequests.push(friendName);
-            alert(`Friend request sent to ${friendName}`);
-            loadFriendRequests();
-        } else {
-            alert(`${friendName} is already your friend or has a pending request.`);
+
+
+    // Send friend request to a user
+    function sendFriendRequest(user_id) {
+        fetch(`/app/friend/${session_id}/${user_id}/sendRequest`, {
+            method: 'POST'
+        })
+            .then(response => {
+                if (response.ok) {
+                    //loadFriendRequests();
+                } else {
+                    return response.json().then(errorData => {
+                        throw new Error(`Failed to send friend request: ${JSON.stringify(errorData)}`);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error("Error sending friend request:", error);
+            });
+    }
+
+    // Find a friend based on a search query
+    async function findFriend(query) {
+        try {
+            const results = await loadInfo(query);
+            displaySearchResults(results);
+        } catch (error) {
+            console.error("Error finding friends:", error);
         }
     }
 
-    // Function to load friend requests
-    function loadFriendRequests() {
-        friendRequestsList.innerHTML = "";
-        friendRequests.forEach(request => {
-            const li = document.createElement("li");
-            li.textContent = request;
-            const acceptBtn = document.createElement("button");
-            acceptBtn.textContent = "Accept";
-            acceptBtn.addEventListener("click", () => acceptFriendRequest(request));
-            li.appendChild(acceptBtn);
-            friendRequestsList.appendChild(li);
-        });
-    }
-
-    // Function to accept friend request
-    function acceptFriendRequest(friendName) {
-        friendRequests = friendRequests.filter(request => request !== friendName);
-        friends.push(friendName);
-        alert(`${friendName} accepted`);
-        loadFriendRequests();
-        listFriends();
-    }
-
-    // Function to find friends
-    function findFriend(query) {
-        const results = allUsers.filter(user => user.toLowerCase().includes(query.toLowerCase()) && !friends.includes(user));
-        friendList.innerHTML = "";
-        results.forEach(result => {
-            const li = document.createElement("li");
-            li.textContent = result;
+    // Display search results in a popup
+    function displaySearchResults(results) {
+        searchResultsPopup.innerHTML = "";
+        results.forEach(user => {
+            const resultDiv = document.createElement("div");
+            resultDiv.textContent = user.name;
             const requestBtn = document.createElement("button");
             requestBtn.textContent = "Send Request";
-            requestBtn.addEventListener("click", () => sendFriendRequest(result));
-            li.appendChild(requestBtn);
-            friendList.appendChild(li);
+            requestBtn.addEventListener("click", () => sendFriendRequest(user.user_id));
+            resultDiv.appendChild(requestBtn);
+            searchResultsPopup.appendChild(resultDiv);
         });
+
+        const inputRect = searchFriendInput.getBoundingClientRect();
+        searchResultsPopup.style.left = `${inputRect.left}px`;
+        searchResultsPopup.style.top = `${inputRect.bottom}px`;
+        searchResultsPopup.style.width = `${inputRect.width}px`;
+        searchResultsPopup.style.display = "block";
     }
 
-    // Event listener for search input
+
+    // Load friend requests received by the user
+    async function loadFriendRequests() {
+        try {
+            const response = await fetch(`/app/friend/${session_id}/loadRequestReceived`);
+            if (!response.ok) {
+                throw new Error('Failed to load friend requests');
+            }
+            const friendRequests = await response.json();
+
+            friendRequestsList.innerHTML = "";
+            for (const request of friendRequests) {
+                const userPublics = await loadInfo(request.user_id1);
+                if (userPublics.length > 0) {
+                    const userPublic = userPublics[0];
+
+                    // Create list item
+                    const li = document.createElement("li");
+                    li.textContent = `${userPublic.name}`;
+
+                    // Create accept button
+                    const acceptBtn = document.createElement("button");
+                    acceptBtn.textContent = "Accept";
+                    acceptBtn.addEventListener("click", () => acceptFriendRequest(userPublic.user_id));
+
+                    // Append elements
+                    li.appendChild(acceptBtn);
+                    friendRequestsList.appendChild(li);
+                }
+            }
+        } catch (error) {
+            console.error("Error loading friend requests:", error);
+            // Handle error: display a message to the user or retry logic
+        }
+    }
+
+    // Accept friend request
+    function acceptFriendRequest(user_id) {
+        fetch(`/app/friend/${session_id}/${user_id}/accept`, {
+            method: 'POST',
+        })
+            .then(response => {
+                if (response.ok) {
+                    loadFriendRequests();
+                    fetchFriends();
+                } else {
+                    return response.json().then(errorData => {
+                        throw new Error(`Failed to accept friend request: ${JSON.stringify(errorData)}`);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error("Error accepting friend request:", error);
+                // Handle error: display a message to the user or retry logic
+            });
+    }
+
+    // Event listener for input in search box
     searchFriendInput.addEventListener("input", function () {
         const query = searchFriendInput.value.trim();
         if (query) {
             findFriend(query);
         } else {
-            listFriends();
+            searchResultsPopup.style.display = "none";
+            fetchFriends();
         }
     });
 
     // Event listener for add friend button
-    addFriendBtn.addEventListener("click", function () {
+    addFriendBtn.addEventListener("click", async function () {
         const friendName = searchFriendInput.value.trim();
         if (friendName) {
-            sendFriendRequest(friendName);
+            try {
+                const results = await loadInfo(friendName); // Fetch users by name
+                if (results.length > 0) {
+                    sendFriendRequest(results[0].user_id); // Send request to the first match
+                } else {
+                    console.error('No user found with that name');
+                }
+            } catch (error) {
+                console.error("Error finding user:", error);
+            }
         }
     });
 
-    // Initial load
-    listFriends();
+    // Event listener to close search results popup if clicked outside
+    document.addEventListener("click", function (event) {
+        if (!searchFriendInput.contains(event.target) && !searchResultsPopup.contains(event.target)) {
+            searchResultsPopup.style.display = "none";
+        }
+    });
+
+    // Initial load of friends and friend requests
+    fetchFriends();
     loadFriendRequests();
 });
 
+
+
+// Function to navigate to main chat page
 function chat_Link() {
-    console.log(getSessionID());
-    window.location.href = `mainchat.html?id=${getSessionID()}`;
+    const sessionId = getSessionID();
+    console.log(sessionId);
+    window.location.href = `mainchat.html?id=${sessionId}`;
 }
 
+// Function to navigate to friend list page
 function contact_Link() {
-    console.log(getSessionID());
-    window.location.href = `friendlist.html?id=${getSessionID()}`;
+    const sessionId = getSessionID();
+    console.log(sessionId);
+    window.location.href = `friendlist.html?id=${sessionId}`;
 }
+
+
 

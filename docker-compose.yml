@@ -10,7 +10,9 @@ services:
       - 1433:1433
     volumes:
       - mssql:/data
-      - ./resources/dbinit.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - ./src/main/resources/dbinit.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+      - ./entrypoint.sh:/usr/src/app/entrypoint.sh
+    entrypoint: ["/bin/bash", "/usr/src/app/entrypoint.sh"]
     restart: unless-stopped
 volumes:
   mssql:
