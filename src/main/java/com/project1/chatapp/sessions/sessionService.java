@@ -9,7 +9,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -61,7 +60,7 @@ public class sessionService {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-    }
+    }/*
     public String getSessionIdFromUser(String user_id){
         String session_id="";
         String getUserIdFromSessionQuery="select session_id from master.dbo.sessions where user_id=?";
@@ -80,7 +79,7 @@ public class sessionService {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-    }
+    }*/
     public String getUserIdFromSession(String session_id){
         String userId="";
         String getUserIdFromSessionQuery="select user_id from master.dbo.sessions where session_id=?";

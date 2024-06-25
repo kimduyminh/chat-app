@@ -1,6 +1,7 @@
 package com.project1.chatapp.user;
 
 import com.project1.chatapp.sessions.sessionService;
+import com.project1.chatapp.BCrypt.bcryptService;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,35 +71,32 @@ public class userService {
         private String user_id1;
         private int status_id;
     }
-    public String tempSession;
+    @Autowired
+    private bcryptService bcryptService;
     public ResponseEntity<String> login(@RequestBody loginInfo loginInfo) {
-        System.out.println("Connected successfully");
-        String loginQuery = "SELECT * FROM master.dbo.[user] where username =? and password=?";
-        try {
-            Connection conn = dataSource.getConnection();
-            PreparedStatement ps = conn.prepareStatement(loginQuery);
-            ps.setString(1, loginInfo.username);
-            ps.setString(2, loginInfo.password);
+        String loginQuery = "SELECT user_id, password FROM master.dbo.[user] WHERE username = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(loginQuery)) {
+
+            ps.setString(1, loginInfo.getUsername());
             ResultSet rs = ps.executeQuery();
-            rs.next();
-            System.out.println("breakpoint");
-            if (rs.getString("username") != null && rs.getString("password") != null) {
-                String user_id = rs.getString("user_id");
-                String session_id=sessionService.newSession(user_id);
-                tempSession=session_id;
-                System.out.println(user_id);
-                ps.close();
-                conn.close();
-                rs.close();
-                return ResponseEntity.status(HttpStatus.OK).body(session_id);
+
+            if (rs.next()) {
+                String storedHash = rs.getString("password");
+                String userId = rs.getString("user_id");
+
+                if (bcryptService.checkPassword(loginInfo.getPassword(), storedHash)) {
+                    String sessionId = sessionService.newSession(userId);
+                    return ResponseEntity.status(HttpStatus.OK).body(sessionId);
+                } else {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\":\"Invalid username or password\"}");
+                }
             } else {
-                rs.close();
-                ps.close();
-                conn.close();
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login failed, please recheck your credentials");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\":\"Invalid username or password\"}");
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\":\"" + e.getMessage() + "\"}");
         }
     }
 
@@ -107,35 +105,34 @@ public class userService {
     }
 
     public ResponseEntity<String> signUp(@RequestBody signupInfo signupInfo) {
-        String checkExistenceQuery = "SELECT * FROM master.dbo.[user] WHERE username = ? AND password = ?";
+        String checkExistenceQuery = "SELECT * FROM master.dbo.[user] WHERE username = ?";
         String signupQuery = "INSERT INTO master.dbo.[user] (user_id, username, password, name) VALUES (?, ?, ?, ?)";
+
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(checkExistenceQuery)) {
+             PreparedStatement checkStatement = connection.prepareStatement(checkExistenceQuery)) {
+                checkStatement.setString(1, signupInfo.getUsername());
+                ResultSet resultSet = checkStatement.executeQuery();
 
-            preparedStatement.setString(1, signupInfo.getUsername());
-            preparedStatement.setString(2, signupInfo.getPassword());
-            ResultSet resultSet = preparedStatement.executeQuery();
+                if (!resultSet.next()) {
+                    String hashedPassword = bcryptService.hashPassword(signupInfo.getPassword());
+                    String idCreated = idGenerator();
 
-            if (!resultSet.next()) { // User does not exist
-                String id_created = idGenerator();
-                try (Connection connection1 = dataSource.getConnection();
-                     PreparedStatement preparedStatement1 = connection1.prepareStatement(signupQuery)) {
+                    try (PreparedStatement signupStatement = connection.prepareStatement(signupQuery)) {
+                        signupStatement.setString(1, idCreated);
+                        signupStatement.setString(2, signupInfo.getUsername());
+                        signupStatement.setString(3, hashedPassword);
+                        signupStatement.setString(4, signupInfo.getName());
+                        signupStatement.executeUpdate();
 
-                    preparedStatement1.setString(1, id_created);
-                    preparedStatement1.setString(2, signupInfo.username);
-                    preparedStatement1.setString(3, signupInfo.password);
-                    preparedStatement1.setString(4, signupInfo.name);
-                    preparedStatement1.executeUpdate();
-
-                    String session_id = sessionService.newSession(id_created);
-                    return ResponseEntity.status(HttpStatus.OK).body("{\"session_id\":\"" + session_id + "\"}");
+                        String sessionId = sessionService.newSession(idCreated);
+                        return ResponseEntity.status(HttpStatus.OK).body(sessionId);
+                    }
+                } else {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\":\"User already exists, please login\"}");
                 }
-            } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\":\"User already exists, please login\"}");
+            } catch (SQLException ex) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\":\"" + ex.getMessage() + "\"}");
             }
-        } catch (SQLException ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\":\"" + ex.getMessage() + "\"}");
-        }
     }
 
     private String getUserNameFromId (String user_id) {
@@ -206,7 +203,7 @@ public class userService {
 
     public List<userPublic> findUser(String session_id, String info) {
         if (sessionService.checkSession(session_id)) {
-            if(info!=sessionService.getUserIdFromSession(session_id)&&info!=getUserNameFromSession(session_id)){
+            if(info.equals(sessionService.getUserIdFromSession(session_id))&&info.equals(getUserNameFromSession(session_id))){
                 List<userPublic> findUserResult = new ArrayList<>();
                 String findUserQuery = "SELECT user_id, name FROM master.dbo.[user] WHERE user_id LIKE ? OR name LIKE ?";
 
@@ -233,12 +230,6 @@ public class userService {
         }
         return null;
     }
-
-    /*
-    public List<user> getListFriendOnline(){
-
-    }*/
-
 
     //Friendship Service
     public List<friend> getListFriend(String session_id) {

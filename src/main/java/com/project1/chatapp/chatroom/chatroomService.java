@@ -52,7 +52,7 @@ public class chatroomService {
     private String idGenerator(){
         return UUID.randomUUID().toString();
     }
-    public String createChatRoom(newGroup newGroup,String session_id){
+    public void createChatRoom(newGroup newGroup,String session_id){
         if (sessionService.checkSession(session_id)){
             String createChatRoomQuery="insert into master.dbo.chatroom (chat_id,chat_name) values (?,?)";
             String addUserToChatroomQuery="insert into master.dbo.joinedchat (chat_id,user_id) values (?,?)";
@@ -70,12 +70,9 @@ public class chatroomService {
                 connectionCreateChatRoom.close();
                 preparedStatementCreateChatRoom.close();
                 preparedStatementAddUserToChatroom.close();
-                return id_created;
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
-        }else{
-            return null;
         }
     }
 
@@ -132,7 +129,6 @@ public class chatroomService {
                     }
 
                 } catch (SQLException e) {
-                    e.printStackTrace();
                     throw new RuntimeException("Error deleting chat room: " + e.getMessage(), e);
                 }
             } else {
@@ -197,8 +193,7 @@ public class chatroomService {
             preparedStatementGetChatroomName.setString(1, chat_id);
             try (ResultSet resultSetGetChatroomName = preparedStatementGetChatroomName.executeQuery()) {
                 if (resultSetGetChatroomName.next()) {
-                    String chatroomName = resultSetGetChatroomName.getString("chat_name");
-                    return chatroomName;
+                    return resultSetGetChatroomName.getString("chat_name");
                 } else {
                     return null;
                 }
@@ -223,7 +218,6 @@ public class chatroomService {
                 }
 
             } catch (SQLException e) {
-                e.printStackTrace();
                 throw new RuntimeException("Error checking if user exists in chatroom: " + e.getMessage(), e);
             }
         }

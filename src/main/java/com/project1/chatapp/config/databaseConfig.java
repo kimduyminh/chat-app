@@ -1,6 +1,5 @@
 package com.project1.chatapp.config;
 
-import lombok.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
@@ -11,15 +10,6 @@ import javax.sql.DataSource;
 @PropertySource("classpath:application.properties")
 @Configuration
 public class databaseConfig {
-    /*@Value("{spring.datasource.url}")
-    private String url;
-
-    @Value("${spring.datasource.username}")
-    private String username;
-
-    @Value("${spring.datasource.password}")
-    private String password;*/
-
     @Bean
     public DataSource dataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();

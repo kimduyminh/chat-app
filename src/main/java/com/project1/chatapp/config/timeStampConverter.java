@@ -15,7 +15,6 @@ public class timeStampConverter {
             Date parsedDate = inputFormat.parse(inputTimestamp);
             return outputFormat.format(parsedDate);
         } catch (ParseException e) {
-            e.printStackTrace();
             return null;
         }
     }

@@ -1,12 +1,10 @@
 package com.project1.chatapp.chatroom;
 
-import com.project1.chatapp.sessions.sessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.project1.chatapp.user.userService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.project1.chatapp.message.messageService;
 
 import java.util.List;
 
@@ -14,10 +12,6 @@ import java.util.List;
 public class chatroomController {
     @Autowired
     private chatroomService chatroomService;
-    @Autowired
-    private messageService messageService;
-    @Autowired
-    private sessionService sessionService;
     @PostMapping("/app/{session_id}/createChatroom")
     public ResponseEntity<String> createChatroom(@PathVariable String session_id, @RequestBody chatroomService.newGroup newGroup) {
         chatroomService.createChatRoom(newGroup, session_id);

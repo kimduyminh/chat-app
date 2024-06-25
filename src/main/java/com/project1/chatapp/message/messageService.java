@@ -3,7 +3,6 @@ package com.project1.chatapp.message;
 import com.project1.chatapp.chatroom.chatroomService;
 import com.project1.chatapp.sessions.sessionService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
@@ -16,22 +15,18 @@ import java.util.Map;
 @Service
 public class messageService {
     @Autowired
-    private message message;
-    @Autowired
     private sessionService sessionService;
     @Autowired
     private DataSource dataSource;
     @Autowired
     private chatroomService chatRoomService;
     public void newMessage(message message, String session_id, String chat_id){
-        // Sử dụng đối tượng 'message' được truyền vào thay vì 'message1' được inject
         System.out.println(session_id + " calling newMessage + " + getUserIdFromSession(session_id));
         if(sessionService.checkSession(session_id)){
             String newMessageQuery = "insert into master.dbo.message (user_id, chat_id, message, time) values (?, ?, ?, ?) ";
             try(Connection newMessageConnection = dataSource.getConnection();
                 PreparedStatement newMessagePreparedStatement = newMessageConnection.prepareStatement(newMessageQuery)) {
 
-                // Sử dụng getters từ đối tượng 'message' được truyền vào
                 newMessagePreparedStatement.setString(1, getUserIdFromSession(session_id));
                 newMessagePreparedStatement.setString(2, chat_id);
                 newMessagePreparedStatement.setString(3, message.getMessage());
@@ -44,9 +39,9 @@ public class messageService {
     }
 
     public String getUserIdFromSession(String session_id){
-        String userId="";
         String getUserIdFromSessionQuery="select user_id from master.dbo.sessions where session_id=?";
         try {
+            String userId="";
             Connection getUserIdFromSessionConnection=dataSource.getConnection();
             PreparedStatement getUserIdFromSessionStatement=getUserIdFromSessionConnection.prepareStatement(getUserIdFromSessionQuery);
             getUserIdFromSessionStatement.setString(1,session_id);
@@ -87,14 +82,13 @@ public class messageService {
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
-                response.put("messages", listMessageData); // Add the messages to the response map
-                return response; // Return the map instead of just the list
+                response.put("messages", listMessageData);
             } else {
-                response.put("messages", new ArrayList<>()); // Return empty list in the map
-                return response;
+                response.put("messages", new ArrayList<>());
             }
+            return response;
         }
-        response.put("messages", new ArrayList<>()); // Return empty list in the map
+        response.put("messages", new ArrayList<>());
         return response;
     }
 

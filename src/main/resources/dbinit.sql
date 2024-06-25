@@ -1,7 +1,7 @@
 CREATE TABLE [user] (
                         user_id NVARCHAR(50) PRIMARY KEY,
                         username NVARCHAR(50) NOT NULL,
-                        password NVARCHAR(50) NOT NULL,
+                        password NVARCHAR(100) NOT NULL,
                         name NVARCHAR(100) NOT NULL
 );
 
