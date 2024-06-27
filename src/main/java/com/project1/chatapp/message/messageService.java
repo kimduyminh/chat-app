@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 @Service
 public class messageService {
@@ -31,41 +30,23 @@ public class messageService {
     private userService userService;
     @Async("AsyncExecutor")
     public void newMessage(message message, String session_id, String chat_id){
-        System.out.println(session_id + " calling newMessage + " + getUserIdFromSession(session_id));
+        System.out.println(session_id + " calling newMessage + " + sessionService.getUserIdFromSession(session_id));
         if(sessionService.checkSession(session_id)){
             String newMessageQuery = "insert into master.dbo.message (user_id, chat_id, message, time) values (?, ?, ?, ?) ";
             try(Connection newMessageConnection = dataSource.getConnection();
                 PreparedStatement newMessagePreparedStatement = newMessageConnection.prepareStatement(newMessageQuery)) {
 
-                newMessagePreparedStatement.setString(1, getUserIdFromSession(session_id).get());
+                newMessagePreparedStatement.setString(1, sessionService.getUserIdFromSession(session_id));
                 newMessagePreparedStatement.setString(2, chat_id);
                 newMessagePreparedStatement.setString(3, encryptionService.encrypt(message.getMessage()));
                 newMessagePreparedStatement.setTimestamp(4, message.getTime());
                 newMessagePreparedStatement.executeUpdate();
-            } catch (SQLException | ExecutionException | InterruptedException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
         }
     }
-    public CompletableFuture<String> getUserIdFromSession(String session_id){
-        String getUserIdFromSessionQuery="select user_id from master.dbo.sessions where session_id=?";
-        try {
-            String userId="";
-            Connection getUserIdFromSessionConnection=dataSource.getConnection();
-            PreparedStatement getUserIdFromSessionStatement=getUserIdFromSessionConnection.prepareStatement(getUserIdFromSessionQuery);
-            getUserIdFromSessionStatement.setString(1,session_id);
-            ResultSet getUserIdFromSessionResult=getUserIdFromSessionStatement.executeQuery();
-            if (getUserIdFromSessionResult.next()){
-                userId=getUserIdFromSessionResult.getString("user_id");
-            }
-            getUserIdFromSessionConnection.close();
-            getUserIdFromSessionStatement.close();
-            getUserIdFromSessionResult.close();
-            return CompletableFuture.completedFuture(userId);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
+
     @Async("AsyncExecutor")
     public CompletableFuture<Map<String, Object>> listMessages(String session_id, String chat_id) {
         String m="messages";

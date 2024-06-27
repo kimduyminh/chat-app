@@ -165,25 +165,13 @@ public class userService {
     }
 
     public String getUserNameFromSession(String session_id) {
-        String user_id = sessionService.getUserIdFromSession(session_id);
-        String getNameQuery = "Select name from master.dbo.[user] where user_id =?";
-        try {
-            String name = "";
-            Connection getNameConnection = dataSource.getConnection();
-            PreparedStatement getNameQ = getNameConnection.prepareStatement(getNameQuery);
-            getNameQ.setString(1, user_id);
-            ResultSet getNameResult = getNameQ.executeQuery();
-            if (getNameResult.next()) {
-                name = getNameResult.getString("name");
-            }
-            getNameResult.close();
-            getNameQ.close();
-            getNameConnection.close();
-            return name;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        if(sessionService.checkSession(session_id)) {
+            String user_id = sessionService.getUserIdFromSession(session_id);
+            return getUserNameFromId(user_id);
         }
+        return null;
     }
+
     public userPublic findUserInChat(String info){
         userPublic userPublicInChat=new userPublic();
         String findUserQuery="select user_id,name from master.dbo.[user] where user_id=? or name=?";
