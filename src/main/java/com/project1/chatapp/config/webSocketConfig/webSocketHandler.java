@@ -10,7 +10,7 @@ import org.springframework.web.socket.WebSocketSession;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 @Configuration
-public class WebSocketHandler implements org.springframework.web.socket.WebSocketHandler {
+public class webSocketHandler implements org.springframework.web.socket.WebSocketHandler {
 
     @Autowired
     private sessionService sessionService;

@@ -73,6 +73,7 @@ public class userService {
         private String user_id1;
         private int status_id;
     }
+    public static String user_id="user_id";
     @Autowired
     private bcryptService bcryptService;
     @Async("AsyncExecutor")
@@ -87,7 +88,7 @@ public class userService {
 
             if (rs.next()) {
                 String storedHash = rs.getString("password");
-                String userId = rs.getString("user_id");
+                String userId = rs.getString(user_id);
 
                 if (bcryptService.checkPassword(loginInfo.getPassword(), storedHash)) {
                     String sessionId = sessionService.newSession(userId);
@@ -194,7 +195,7 @@ public class userService {
             ResultSet findUserResultSet=findUserStatement.executeQuery();
             if (findUserResultSet.next()){
                 userPublicInChat.name=findUserResultSet.getString("name");
-                userPublicInChat.user_id=findUserResultSet.getString("user_id");
+                userPublicInChat.user_id=findUserResultSet.getString(user_id);
             }
             findUserResultSet.close();
             findUserStatement.close();
@@ -221,7 +222,7 @@ public class userService {
                         while (findUserResultSet.next()) {
                             userPublic userPublic = new userPublic();
                             userPublic.setName(findUserResultSet.getString("name"));
-                            userPublic.setUser_id(findUserResultSet.getString("user_id"));
+                            userPublic.setUser_id(findUserResultSet.getString(user_id));
                             findUserResult.add(userPublic);
                         }
                     }

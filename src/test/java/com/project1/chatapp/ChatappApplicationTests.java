@@ -7,7 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 class ChatappApplicationTests {
 
 	@Test
-	void contextLoads() {
+	void contextLoads() throws UnsupportedOperationException{
 	}
 
 }

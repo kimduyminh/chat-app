@@ -7,8 +7,8 @@ const conversationFormButtons = {
     record: document.querySelector(".conversation-form-record .ri-mic-line"),
     submitMessage: document.querySelector(".conversation-form-submit .ri-send-plane-2-line")
 };
-var chatLink = document.getElementById("chat-link");
-var contactsLink = document.getElementById("contacts-link");
+const chatLink = document.getElementById("chat-link");
+const contactsLink = document.getElementById("contacts-link");
 let inputData="";
 let newlyCreatedChatId="";
 

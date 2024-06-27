@@ -68,6 +68,7 @@ public class messageService {
     }
     @Async("AsyncExecutor")
     public CompletableFuture<Map<String, Object>> listMessages(String session_id, String chat_id) {
+        String m="messages";
         Map<String, Object> response = new HashMap<>();
         System.out.println("calling listMessages");
         if (sessionService.checkSession(session_id)) {
@@ -94,13 +95,13 @@ public class messageService {
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
-                response.put("messages", listMessageData);
+                response.put(m, listMessageData);
             } else {
-                response.put("messages", new ArrayList<>());
+                response.put(m, new ArrayList<>());
             }
             return CompletableFuture.completedFuture(response);
         }
-        response.put("messages", new ArrayList<>());
+        response.put(m, new ArrayList<>());
         return CompletableFuture.completedFuture(response);
     }
 
