@@ -964,10 +964,16 @@ document.addEventListener("DOMContentLoaded", function () {
                     const li = document.createElement("li");
                     li.textContent = `${userPublic.name}`;
 
-                    // Create accept button
+                    // Create accept and refuse button
                     const acceptBtn = document.createElement("button");
                     acceptBtn.textContent = "Accept";
                     acceptBtn.addEventListener("click", () => acceptFriendRequest(userPublic.user_id));
+
+                    const refuseBtn = document.createElement("button");
+                    refuseBtn.textContent = "Refuse";
+                    refuseBtn.addEventListener("click", () => refuseFriendRequest(userPublic.user_id));
+
+
 
                     // Append elements
                     li.appendChild(acceptBtn);
@@ -980,7 +986,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Accept friend request
+    // Accept and refuse friend request
     function acceptFriendRequest(user_id) {
         fetch(`/app/friend/${session_id}/${user_id}/accept`, {
             method: 'POST',
@@ -997,6 +1003,25 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .catch(error => {
                 console.error("Error accepting friend request:", error);
+                // Handle error: display a message to the user or retry logic
+            });
+    }
+
+    function refuseFriendRequest(user_id) {
+        fetch(`/app/friend/${session_id}/${user_id}/refuse`, {
+            method: 'POST',
+        })
+            .then(response => {
+                if (response.ok) {
+                    loadFriendRequests();
+                } else {
+                    return response.json().then(errorData => {
+                        throw new Error(`Failed to refuse friend request: ${JSON.stringify(errorData)}`);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error("Error refusing friend request:", error);
                 // Handle error: display a message to the user or retry logic
             });
     }

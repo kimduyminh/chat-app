@@ -16,5 +16,4 @@
 - Go to https://localhost:8080 to start using the app
 
 ## Upcoming works:
-- Encrypting some user datas
 - Dockerizing the app to run in just 1 command

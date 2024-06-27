@@ -203,7 +203,7 @@ public class userService {
 
     public List<userPublic> findUser(String session_id, String info) {
         if (sessionService.checkSession(session_id)) {
-            if(info.equals(sessionService.getUserIdFromSession(session_id))&&info.equals(getUserNameFromSession(session_id))){
+            if(!info.equals(sessionService.getUserIdFromSession(session_id)) && !info.equals(getUserNameFromSession(session_id))){
                 List<userPublic> findUserResult = new ArrayList<>();
                 String findUserQuery = "SELECT user_id, name FROM master.dbo.[user] WHERE user_id LIKE ? OR name LIKE ?";
 
