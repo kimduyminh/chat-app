@@ -4,6 +4,7 @@ import com.project1.chatapp.Security.encryptionService;
 import com.project1.chatapp.chatroom.chatroomService;
 import com.project1.chatapp.sessions.sessionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import com.project1.chatapp.user.userService;
 
@@ -13,6 +14,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @Service
 public class messageService {
@@ -26,6 +29,7 @@ public class messageService {
     private encryptionService encryptionService;
     @Autowired
     private userService userService;
+    @Async("AsyncExecutor")
     public void newMessage(message message, String session_id, String chat_id){
         System.out.println(session_id + " calling newMessage + " + getUserIdFromSession(session_id));
         if(sessionService.checkSession(session_id)){
@@ -33,18 +37,17 @@ public class messageService {
             try(Connection newMessageConnection = dataSource.getConnection();
                 PreparedStatement newMessagePreparedStatement = newMessageConnection.prepareStatement(newMessageQuery)) {
 
-                newMessagePreparedStatement.setString(1, getUserIdFromSession(session_id));
+                newMessagePreparedStatement.setString(1, getUserIdFromSession(session_id).get());
                 newMessagePreparedStatement.setString(2, chat_id);
                 newMessagePreparedStatement.setString(3, encryptionService.encrypt(message.getMessage()));
                 newMessagePreparedStatement.setTimestamp(4, message.getTime());
                 newMessagePreparedStatement.executeUpdate();
-            } catch (SQLException e) {
+            } catch (SQLException | ExecutionException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
     }
-
-    public String getUserIdFromSession(String session_id){
+    public CompletableFuture<String> getUserIdFromSession(String session_id){
         String getUserIdFromSessionQuery="select user_id from master.dbo.sessions where session_id=?";
         try {
             String userId="";
@@ -58,12 +61,13 @@ public class messageService {
             getUserIdFromSessionConnection.close();
             getUserIdFromSessionStatement.close();
             getUserIdFromSessionResult.close();
-            return userId;
+            return CompletableFuture.completedFuture(userId);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
-    public Map<String, Object> listMessages(String session_id, String chat_id) {
+    @Async("AsyncExecutor")
+    public CompletableFuture<Map<String, Object>> listMessages(String session_id, String chat_id) {
         Map<String, Object> response = new HashMap<>();
         System.out.println("calling listMessages");
         if (sessionService.checkSession(session_id)) {
@@ -94,10 +98,10 @@ public class messageService {
             } else {
                 response.put("messages", new ArrayList<>());
             }
-            return response;
+            return CompletableFuture.completedFuture(response);
         }
         response.put("messages", new ArrayList<>());
-        return response;
+        return CompletableFuture.completedFuture(response);
     }
 
 }

@@ -13,11 +13,11 @@ public class userController {
     private userService userService;
     @PostMapping("/app.login")
     public ResponseEntity<String> login(@RequestBody userService.loginInfo loginInfo){
-        return userService.login(loginInfo);
+        return userService.login(loginInfo).join();
     }
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody userService.signupInfo signupInfo){
-        return userService.signUp(signupInfo);
+        return userService.signUp(signupInfo).join();
     }
     @PostMapping("/app/{session_id}/find")
     public List<userService.userPublic> findUser(@PathVariable("session_id") String session_id, @RequestBody Map<String, String> payload) {

@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,6 +20,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 
@@ -73,7 +75,8 @@ public class userService {
     }
     @Autowired
     private bcryptService bcryptService;
-    public ResponseEntity<String> login(@RequestBody loginInfo loginInfo) {
+    @Async("AsyncExecutor")
+    public CompletableFuture<ResponseEntity<String>> login(@RequestBody loginInfo loginInfo) {
         String loginQuery = "SELECT user_id, password FROM master.dbo.[user] WHERE username = ?";
 
         try (Connection conn = dataSource.getConnection();
@@ -88,15 +91,15 @@ public class userService {
 
                 if (bcryptService.checkPassword(loginInfo.getPassword(), storedHash)) {
                     String sessionId = sessionService.newSession(userId);
-                    return ResponseEntity.status(HttpStatus.OK).body(sessionId);
+                    return CompletableFuture.completedFuture(ResponseEntity.status(HttpStatus.OK).body(sessionId));
                 } else {
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\":\"Invalid username or password\"}");
+                    return CompletableFuture.completedFuture(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\":\"Invalid username or password\"}"));
                 }
             } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\":\"Invalid username or password\"}");
+                return CompletableFuture.completedFuture(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\":\"Invalid username or password\"}"));
             }
         } catch (SQLException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\":\"" + e.getMessage() + "\"}");
+            return CompletableFuture.completedFuture(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\":\"" + e.getMessage() + "\"}"));
         }
     }
 
@@ -104,7 +107,8 @@ public class userService {
         return UUID.randomUUID().toString();
     }
 
-    public ResponseEntity<String> signUp(@RequestBody signupInfo signupInfo) {
+    @Async("AsyncExecutor")
+    public CompletableFuture<ResponseEntity<String>> signUp(@RequestBody signupInfo signupInfo) {
         String checkExistenceQuery = "SELECT * FROM master.dbo.[user] WHERE username = ?";
         String signupQuery = "INSERT INTO master.dbo.[user] (user_id, username, password, name) VALUES (?, ?, ?, ?)";
 
@@ -125,13 +129,13 @@ public class userService {
                         signupStatement.executeUpdate();
 
                         String sessionId = sessionService.newSession(idCreated);
-                        return ResponseEntity.status(HttpStatus.OK).body(sessionId);
+                        return CompletableFuture.completedFuture(ResponseEntity.status(HttpStatus.OK).body(sessionId));
                     }
                 } else {
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\":\"User already exists, please login\"}");
+                    return CompletableFuture.completedFuture(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\":\"User already exists, please login\"}"));
                 }
             } catch (SQLException ex) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\":\"" + ex.getMessage() + "\"}");
+                return CompletableFuture.completedFuture(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\":\"" + ex.getMessage() + "\"}"));
             }
     }
 
