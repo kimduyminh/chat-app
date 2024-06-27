@@ -452,6 +452,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
 });
 
+
+
 async function loadMessages(session_id, chat_id) {
     console.log('fetching data ' + session_id + ' ' + chat_id);
     try {
@@ -460,9 +462,10 @@ async function loadMessages(session_id, chat_id) {
             const responseData = await response.json();
             console.log('huy tran ' + responseData.messages);
             const chatGrid = document.getElementById('chat-content-fetch');
-            chatGrid.innerHTML = ''; // Clear existing content
+            chatGrid.innerHTML = '';
 
             responseData.messages.forEach(message => {
+
                 let chatHTML = '';
 
                 if (message.sentBySession) {
@@ -483,7 +486,7 @@ async function loadMessages(session_id, chat_id) {
                         <div class="conversation-item-wrapper">
                             <div class="conversation-item-box">
                                 <div class="conversation-item-text">
-                                    <p>${escapeHtml(message.message)}</p>
+                                    <p>${escapeHtml(message.name)}: ${escapeHtml(message.message)}</p>
                                     <div class="conversation-item-time">${message.time}</div>
                                 </div>
                                 <div class="conversation-item-dropdown">

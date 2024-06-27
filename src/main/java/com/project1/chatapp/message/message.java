@@ -13,6 +13,7 @@ import java.sql.Timestamp;
 @Setter
 @Builder
 public class message {
+    private String name;
     private String user_id;
     private String message;
     private String chat_id;

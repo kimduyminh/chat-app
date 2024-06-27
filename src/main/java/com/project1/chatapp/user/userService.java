@@ -1,7 +1,7 @@
 package com.project1.chatapp.user;
 
 import com.project1.chatapp.sessions.sessionService;
-import com.project1.chatapp.BCrypt.bcryptService;
+import com.project1.chatapp.Security.bcryptService;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -135,7 +135,7 @@ public class userService {
             }
     }
 
-    private String getUserNameFromId (String user_id) {
+    public String getUserNameFromId (String user_id) {
         String getName="select name from [user] where user_id=?";
         try {
             Connection getNameConnection= dataSource.getConnection();

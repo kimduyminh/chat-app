@@ -1,9 +1,11 @@
 package com.project1.chatapp.message;
 
+import com.project1.chatapp.Security.encryptionService;
 import com.project1.chatapp.chatroom.chatroomService;
 import com.project1.chatapp.sessions.sessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.project1.chatapp.user.userService;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -20,6 +22,10 @@ public class messageService {
     private DataSource dataSource;
     @Autowired
     private chatroomService chatRoomService;
+    @Autowired
+    private encryptionService encryptionService;
+    @Autowired
+    private userService userService;
     public void newMessage(message message, String session_id, String chat_id){
         System.out.println(session_id + " calling newMessage + " + getUserIdFromSession(session_id));
         if(sessionService.checkSession(session_id)){
@@ -29,7 +35,7 @@ public class messageService {
 
                 newMessagePreparedStatement.setString(1, getUserIdFromSession(session_id));
                 newMessagePreparedStatement.setString(2, chat_id);
-                newMessagePreparedStatement.setString(3, message.getMessage());
+                newMessagePreparedStatement.setString(3, encryptionService.encrypt(message.getMessage()));
                 newMessagePreparedStatement.setTimestamp(4, message.getTime());
                 newMessagePreparedStatement.executeUpdate();
             } catch (SQLException e) {
@@ -72,8 +78,10 @@ public class messageService {
                         while (listMessageResultSet.next()) {
                             message message = new message();
                             message.setChat_id(chat_id);
-                            message.setUser_id(listMessageResultSet.getString("user_id"));
-                            message.setMessage(listMessageResultSet.getString("message"));
+                            String user_id=listMessageResultSet.getString("user_id");
+                            message.setUser_id(user_id);
+                            message.setName(userService.getUserNameFromId(user_id));
+                            message.setMessage(encryptionService.decrypt(listMessageResultSet.getString("message")));
                             message.setTime(listMessageResultSet.getTimestamp("time"));
                             message.setSentBySession(message.getUser_id().equals(sessionService.getUserIdFromSession(session_id)));
                             listMessageData.add(message);

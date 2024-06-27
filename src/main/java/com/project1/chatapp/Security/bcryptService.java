@@ -1,4 +1,4 @@
-package com.project1.chatapp.BCrypt;
+package com.project1.chatapp.Security;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
