@@ -3,9 +3,13 @@
 ## Description
 - Simple chatapp built with websocket protocol
 - The dev haven't touch grass for several weeks
-- Enhanced connection with TLS v1.2
 
-## Requirement (current):
+## Features:
+- Enhanced connection with TLS v1.2
+- Enhanced security with Hashing and Encryption
+- Realtime chat with websocket implementation
+
+## Requirement (currently):
 - IntelliJ IDEA Ultimate
 - Docker
 
