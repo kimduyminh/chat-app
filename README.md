@@ -21,3 +21,4 @@
 
 ## Upcoming works:
 - Dockerizing the app to run in just 1 command
+- Implementing some cryptography method ? Maybe trying some blockchain xD
