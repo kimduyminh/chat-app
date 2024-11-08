@@ -1,18 +1,31 @@
+version: '3.8'
+
 services:
   mssql:
     container_name: mssql
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
-      - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=KimDuyMinh1234@
-      - MSSQL_PID=Express
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "KimDuyMinh1234@"
+      MSSQL_PID: "Express"
     ports:
-      - 1433:1433
+      - "1433:1433"
     volumes:
-      - mssql:/data
+      - mssql_data:/var/opt/mssql/data
       - ./src/main/resources/dbinit.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
-      - ./entrypoint.sh:/usr/src/app/entrypoint.sh
+      - ./entrypoint.sh:/usr/src/app/entrypoint.sh:ro
     entrypoint: ["/bin/bash", "/usr/src/app/entrypoint.sh"]
     restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - mssql
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
 volumes:
-  mssql:
+  mssql_data:
